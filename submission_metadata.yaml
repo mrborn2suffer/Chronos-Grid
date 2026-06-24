@@ -1,0 +1,68 @@
+# Redrob Hackathon — Submission Metadata
+# ============================================================================
+# Team identity
+# ============================================================================
+team_name: "Antigravity-Ranker"
+
+primary_contact:
+  name: "Vaibhav"
+  email: "vaibhav@example.com"
+  phone: "+91-9999999999"
+
+team_members:
+  - name: "Vaibhav"
+    email: "vaibhav@example.com"
+    role: "ML Engineer"
+
+# ============================================================================
+# Code and reproducibility
+# ============================================================================
+github_repo: "https://github.com/Vaibhav/redrob-candidate-ranker"
+sandbox_link: "https://huggingface.co/spaces/Vaibhav/redrob-candidate-ranker"
+reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./submission.csv"
+
+# ============================================================================
+# Compute environment
+# ============================================================================
+compute:
+  platform: "Local Linux box"
+  cpu_cores: 8
+  ram_gb: 16
+  python_version: "3.14.4"
+  os: "Ubuntu Linux"
+  uses_gpu_for_inference: false
+  has_network_during_ranking: false
+  pre_computation_required: false
+  pre_computation_time_minutes: 0
+
+# ============================================================================
+# AI tools declaration
+# ============================================================================
+ai_tools_used:
+  - "Gemini"
+
+ai_usage_summary: |
+  Used Gemini (Antigravity AI coding assistant) for implementing the hybrid candidate scoring ranker, 
+  conducting honeypot validation checks, and drafting the final deck. No candidate profile data was fed 
+  to external APIs.
+
+# ============================================================================
+# Approach summary
+# ============================================================================
+methodology_summary: |
+  A hybrid rule-based and vector-space scoring model. Fits a TF-IDF text similarity layer on candidate 
+  summaries and descriptions against JD keywords. Integrates a strict career experience curve (peak 5-9 
+  years), service-company exclusion penalty (100% service-company careers are penalized), and required 
+  skills mapping (vector databases, embeddings, evaluation). Activity, notice period, and location 
+  preferences are combined into a multiplicative behavioral multiplier. Honeypots are strictly filtered 
+  via Krutrim/Sarvam AI foundation dates and career duration validations.
+
+# ============================================================================
+# Declarations
+# ============================================================================
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true

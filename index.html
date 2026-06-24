@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redrob AI Matching Engine Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-main: #0a0b0d;
+    --bg-pane: #121418;
+    --bg-hover: #1b1e24;
+    --bg-selected: #22262e;
+    --border-color: #20242b;
+    --text-primary: #e1e4e8;
+    --text-secondary: #8a909a;
+    --text-muted: #585d66;
+    --accent: #acb3bd;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-mono: 'Fira Code', monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    height: 70px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-pane);
+    padding: 0 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .header-left h1 {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #fff;
+  }
+
+  .header-left p {
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-right {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .main-layout {
+    flex-grow: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* Left Panel: Search, List & Fixed Pagination */
+  .left-pane {
+    width: 420px;
+    border-right: 1px solid var(--border-color);
+    background-color: var(--bg-pane);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .search-container {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .search-input {
+    width: 100%;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 14px;
+    font-size: 13px;
+    outline: none;
+    font-family: var(--font-sans);
+  }
+
+  .search-input:focus {
+    border-color: var(--accent);
+  }
+
+  .filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+  }
+
+  .filter-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+  }
+
+  .filter-btn.active {
+    background-color: var(--text-primary);
+    color: var(--bg-main);
+    border-color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .candidate-list {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+
+  .candidate-item {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: background-color 0.2s ease;
+  }
+
+  .candidate-item:hover {
+    background-color: var(--bg-hover);
+  }
+
+  .candidate-item.selected {
+    background-color: var(--bg-selected);
+    border-left: 2px solid var(--text-primary);
+  }
+
+  .rank-badge {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-muted);
+    line-height: 1;
+    width: 32px;
+  }
+
+  .candidate-item.selected .rank-badge {
+    color: var(--text-primary);
+  }
+
+  .item-details {
+    flex-grow: 1;
+  }
+
+  .item-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+
+  .item-name {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 14px;
+    color: #fff;
+  }
+
+  .item-score {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .item-headline {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+    margin-bottom: 6px;
+  }
+
+  .item-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Fixed Pagination Footer */
+  .pagination-container {
+    border-top: 1px solid var(--border-color);
+    padding: 14px 20px;
+    background-color: var(--bg-pane);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .page-btn {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 5px 11px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    outline: none;
+    transition: all 0.2s ease;
+  }
+
+  .page-btn:hover:not(:disabled) {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+  }
+
+  .page-btn.active {
+    background-color: var(--text-primary);
+    color: var(--bg-main);
+    border-color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .page-btn:disabled {
+    color: var(--text-muted);
+    border-color: var(--border-color);
+    cursor: not-allowed;
+  }
+
+  /* Right Panel: Detail Viewer */
+  .right-pane {
+    flex-grow: 1;
+    overflow-y: auto;
+    background-color: var(--bg-main);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .empty-state {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-muted);
+  }
+
+  .empty-state h2 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .profile-header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .profile-title-block h2 {
+    font-family: var(--font-serif);
+    font-size: 36px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .profile-headline {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .profile-meta-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .meta-val {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .score-card {
+    background-color: var(--bg-pane);
+    border: 1px solid var(--border-color);
+    padding: 20px 24px;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .score-card-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .score-card-value {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .reasoning-section {
+    border-left: 2px solid var(--text-primary);
+    padding-left: 24px;
+    margin: 10px 0;
+  }
+
+  .reasoning-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .reasoning-text {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .summary-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+
+  /* Skills display */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .skill-card {
+    border: 1px solid var(--border-color);
+    padding: 10px 14px;
+    background-color: var(--bg-pane);
+  }
+
+  .skill-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .skill-proficiency {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    text-transform: lowercase;
+  }
+
+  .skill-meta {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* Experience Timeline */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    position: relative;
+  }
+
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 5px;
+    bottom: 5px;
+    width: 1px;
+    background-color: var(--border-color);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-left: 36px;
+  }
+
+  .timeline-marker {
+    position: absolute;
+    left: 5px;
+    top: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--text-secondary);
+  }
+
+  .timeline-item:first-child .timeline-marker {
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
+  }
+
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .timeline-role {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .timeline-company {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .timeline-dates {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+  }
+
+  .timeline-desc {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  /* Educational Block */
+  .education-row {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed var(--border-color);
+    padding: 12px 0;
+  }
+
+  .education-row:last-child {
+    border-bottom: none;
+  }
+
+  .edu-school {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+
+  .edu-degree {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .edu-meta {
+    text-align: right;
+    font-size: 12px;
+  }
+
+  .edu-years {
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .edu-tier {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+  }
+
+  /* Signals table */
+  .signals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .signal-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .signal-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 12.5px;
+  }
+
+  .signal-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .signal-label {
+    color: var(--text-secondary);
+    width: 60%;
+  }
+
+  .signal-val {
+    font-family: var(--font-mono);
+    text-align: right;
+    color: var(--text-primary);
+  }
+
+  /* View JD Section button */
+  .jd-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    font-size: 11px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .jd-toggle-btn:hover {
+    color: #fff;
+    border-color: var(--text-secondary);
+  }
+
+  /* Overlay Modal for JD */
+  .jd-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(10, 11, 13, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .jd-modal.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .jd-modal-content {
+    background-color: var(--bg-pane);
+    border: 1px solid var(--border-color);
+    width: 800px;
+    max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .jd-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 16px;
+  }
+
+  .jd-modal-title {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .close-modal-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .close-modal-btn:hover {
+    color: #fff;
+  }
+
+  .jd-section-header {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 15px;
+    margin-bottom: 5px;
+  }
+
+  .jd-body-text {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .jd-body-text ul {
+    margin-left: 20px;
+    margin-top: 5px;
+  }
+
+  .jd-body-text li {
+    margin-bottom: 5px;
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <h1>Redrob Candidate Engine</h1>
+      <p>Intelligent Candidate Discovery & Ranking Dashboard</p>
+    </div>
+    <div>
+      <button class="jd-toggle-btn" id="open-jd-btn">View Job Description</button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <!-- Left panel: candidate matching list -->
+    <div class="left-pane">
+      <div class="search-container">
+        <input type="text" class="search-input" id="search-input" placeholder="Search by name, title, or skill...">
+        
+        <div class="filter-tags">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="exp">5-9 Yrs Exp</button>
+          <button class="filter-btn" data-filter="product">Product Co.</button>
+          <button class="filter-btn" data-filter="notice">Notice &le; 30d</button>
+          <button class="filter-btn" data-filter="local">Pune/Noida</button>
+        </div>
+      </div>
+      
+      <div class="candidate-list" id="candidate-list">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Pagination footer control -->
+      <div class="pagination-container" id="pagination-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Right panel: candidate detail viewer -->
+    <div class="right-pane" id="right-pane">
+      <div class="empty-state">
+        <h2>Select a candidate</h2>
+        <p>Choose from the list on the left to view full profile details and recommendations.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job Description Modal -->
+  <div class="jd-modal" id="jd-modal">
+    <div class="jd-modal-content">
+      <div class="jd-modal-header">
+        <h3 class="jd-modal-title">Senior AI Engineer — Founding Team</h3>
+        <button class="close-modal-btn" id="close-jd-btn">close [esc]</button>
+      </div>
+      
+      <div>
+        <p class="jd-body-text">
+          <strong>Company:</strong> Redrob AI (Series A talent intelligence platform)<br>
+          <strong>Location:</strong> Pune/Noida, India (Hybrid)<br>
+          <strong>Experience Required:</strong> 5–9 years (in Applied ML/AI product companies)
+        </p>
+
+        <div class="jd-section-header">Mandate & Focus</div>
+        <p class="jd-body-text">
+          Own the intelligence layer of Redrob's product (ranking, retrieval, and matching systems). Deployed embeddings-based systems and hybrid vector search databases to production.
+        </p>
+
+        <div class="jd-section-header">Core Tech Requirements</div>
+        <p class="jd-body-text">
+          <ul>
+            <li>Production embeddings retrieval (sentence-transformers, OpenAI embeddings, etc.)</li>
+            <li>Production vector databases or hybrid search infrastructure (Milvus, Qdrant, Pinecone, FAISS, Elasticsearch)</li>
+            <li>Strong Python skills</li>
+            <li>Hands-on experience designing evaluation frameworks (NDCG, MRR, MAP)</li>
+          </ul>
+        </p>
+
+        <div class="jd-section-header">Nice-to-Haves</div>
+        <p class="jd-body-text">
+          LLM fine-tuning (LoRA, QLoRA, PEFT), distributed systems, inference optimization, open-source.
+        </p>
+
+        <div class="jd-section-header">Strict Exclusions (Red Flags)</div>
+        <p class="jd-body-text">
+          <ul>
+            <li>Candidates whose entire career is spent in consulting/IT service companies (TCS, Infosys, Wipro, Accenture, Cognizant, etc.)</li>
+            <li>AI experience consisting only of recent LangChain tutorials.</li>
+            <li>CV, Speech, or Robotics focus without significant NLP/IR exposure.</li>
+            <li>Non-coding architects (has not written production code in last 18 months).</li>
+          </ul>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global State
+    let candidatesData = [];
+    let activeFilter = 'all';
+    let searchQuery = '';
+    let currentPage = 1;
+    const pageSize = 20;
+
+    // Elements
+    const candidateList = document.getElementById('candidate-list');
+    const rightPane = document.getElementById('right-pane');
+    const paginationContainer = document.getElementById('pagination-container');
+    const searchInput = document.getElementById('search-input');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const jdModal = document.getElementById('jd-modal');
+    const openJdBtn = document.getElementById('open-jd-btn');
+    const closeJdBtn = document.getElementById('close-jd-btn');
+
+    // Fetch Candidates Data
+    async function loadCandidates() {
+      try {
+        const response = await fetch('extracted_details.json');
+        candidatesData = await response.json();
+        renderList();
+        
+        // Auto-select first candidate on load
+        const filtered = candidatesData.filter(passFilter);
+        if (filtered.length > 0) {
+          selectCandidate(filtered[0].candidate_id);
+        }
+      } catch (error) {
+        console.error('Error loading candidate details:', error);
+        candidateList.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--text-secondary);">Error loading profiles dataset.</div>`;
+      }
+    }
+
+    // Check Filters
+    function passFilter(cand) {
+      // 1. Search Query
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const name = cand.profile.anonymized_name.toLowerCase();
+        const headline = cand.profile.headline.toLowerCase();
+        const currentTitle = cand.profile.current_title.toLowerCase();
+        const hasSkill = cand.skills.some(s => s.name.toLowerCase().includes(query));
+        
+        if (!name.includes(query) && !headline.includes(query) && !currentTitle.includes(query) && !hasSkill) {
+          return false;
+        }
+      }
+
+      // 2. Button Category
+      if (activeFilter === 'all') return true;
+
+      if (activeFilter === 'exp') {
+        const yrs = cand.profile.years_of_experience;
+        return yrs >= 5.0 && yrs <= 9.0;
+      }
+
+      if (activeFilter === 'product') {
+        const services = ["tcs", "infosys", "wipro", "accenture", "cognizant", "capgemini", "tech mahindra", "hcl", "mphasis", "mindtree", "lti", "l&t infotech"];
+        let total = 0;
+        let serv = 0;
+        cand.career_history.forEach(job => {
+          const comp = job.company.toLowerCase();
+          total += job.duration_months;
+          if (services.some(s => comp.includes(s))) {
+            serv += job.duration_months;
+          }
+        });
+        return total > 0 && serv < total;
+      }
+
+      if (activeFilter === 'notice') {
+        return cand.redrob_signals.notice_period_days <= 30;
+      }
+
+      if (activeFilter === 'local') {
+        const loc = cand.profile.location.toLowerCase();
+        return loc.includes('pune') || loc.includes('noida') || loc.includes('delhi') || loc.includes('ncr') || loc.includes('gurgaon');
+      }
+
+      return true;
+    }
+
+    // Render list using pagination
+    function renderList() {
+      const filtered = candidatesData.filter(passFilter);
+      const totalItems = filtered.length;
+      const totalPages = Math.ceil(totalItems / pageSize) || 1;
+      
+      // Keep page in bound
+      if (currentPage > totalPages) {
+        currentPage = totalPages;
+      }
+      if (currentPage < 1) {
+        currentPage = 1;
+      }
+
+      if (totalItems === 0) {
+        candidateList.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 13px;">No matching candidates found.</div>`;
+        paginationContainer.innerHTML = '';
+        return;
+      }
+
+      // Get page slice
+      const startIdx = (currentPage - 1) * pageSize;
+      const endIdx = startIdx + pageSize;
+      const pageCandidates = filtered.slice(startIdx, endIdx);
+      
+      const selectedId = getSelectedCandidateId();
+
+      candidateList.innerHTML = pageCandidates.map(cand => {
+        const isSelected = cand.candidate_id === selectedId;
+        const scorePct = (cand.score * 100).toFixed(2);
+        
+        return `
+          <div class="candidate-item ${isSelected ? 'selected' : ''}" onclick="selectCandidate('${cand.candidate_id}')">
+            <div class="rank-badge">${String(cand.rank).padStart(2, '0')}</div>
+            <div class="item-details">
+              <div class="item-title-row">
+                <div class="item-name">${cand.profile.anonymized_name}</div>
+                <div class="item-score">${scorePct}%</div>
+              </div>
+              <div class="item-headline">${cand.profile.current_title} at ${cand.profile.current_company}</div>
+              <div class="item-meta">
+                <span>${cand.profile.years_of_experience.toFixed(1)} yrs exp</span>
+                <span>•</span>
+                <span>${cand.redrob_signals.notice_period_days}d notice</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      renderPaginationControls(totalItems);
+    }
+
+    function changePage(page) {
+      currentPage = page;
+      renderList();
+    }
+
+    function renderPaginationControls(totalItems) {
+      const totalPages = Math.ceil(totalItems / pageSize) || 1;
+      
+      let html = '';
+      
+      // Prev button
+      html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">&larr;</button>`;
+      
+      // Pagination range logic
+      let startPage = Math.max(1, currentPage - 1);
+      let endPage = Math.min(totalPages, startPage + 2);
+      if (endPage - startPage < 2) {
+        startPage = Math.max(1, endPage - 2);
+      }
+      
+      if (startPage > 1) {
+        html += `<button class="page-btn" onclick="changePage(1)">1</button>`;
+        if (startPage > 2) {
+          html += `<span style="color: var(--text-muted); font-size: 11px; padding: 0 4px;">...</span>`;
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          html += `<span style="color: var(--text-muted); font-size: 11px; padding: 0 4px;">...</span>`;
+        }
+        html += `<button class="page-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+      }
+      
+      // Next button
+      html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">&rarr;</button>`;
+      
+      paginationContainer.innerHTML = html;
+    }
+
+    function getSelectedCandidateId() {
+      const selectedEl = rightPane.querySelector('[data-candidate-id]');
+      return selectedEl ? selectedEl.getAttribute('data-candidate-id') : null;
+    }
+
+    // Selection details viewer
+    function selectCandidate(cid) {
+      const cand = candidatesData.find(c => c.candidate_id === cid);
+      if (!cand) return;
+
+      // Update selection in list elements
+      const items = candidateList.querySelectorAll('.candidate-item');
+      // Highlight correct item
+      const filtered = candidatesData.filter(passFilter);
+      const startIdx = (currentPage - 1) * pageSize;
+      const indexInPage = filtered.slice(startIdx, startIdx + pageSize).findIndex(c => c.candidate_id === cid);
+      
+      items.forEach(el => el.classList.remove('selected'));
+      if (indexInPage !== -1 && items[indexInPage]) {
+        items[indexInPage].classList.add('selected');
+      }
+
+      // Render details HTML
+      const scorePct = (cand.score * 100).toFixed(2);
+      
+      const careerTimeline = cand.career_history.map(job => {
+        const endDate = job.end_date ? job.end_date : 'Present';
+        return `
+          <div class="timeline-item">
+            <div class="timeline-marker"></div>
+            <div class="timeline-header">
+              <div class="timeline-role">${job.title}</div>
+              <div class="timeline-dates">${job.start_date} to ${endDate} (${job.duration_months} mos)</div>
+            </div>
+            <div class="timeline-company">${job.company} — ${job.industry} (${job.company_size})</div>
+            <p class="timeline-desc">${job.description}</p>
+          </div>
+        `;
+      }).join('');
+
+      const skillsList = cand.skills.map(s => {
+        return `
+          <div class="skill-card">
+            <div class="skill-name">${s.name}</div>
+            <div class="skill-proficiency">${s.proficiency}</div>
+            <div class="skill-meta">${s.duration_months} months • ${s.endorsements} endorsements</div>
+          </div>
+        `;
+      }).join('');
+
+      const educationList = cand.education.map(edu => {
+        return `
+          <div class="education-row">
+            <div>
+              <div class="edu-school">${edu.institution}</div>
+              <div class="edu-degree">${edu.degree} in ${edu.field_of_study}</div>
+            </div>
+            <div class="edu-meta">
+              <div class="edu-years">${edu.start_year} - ${edu.end_year}</div>
+              <div class="edu-tier">${edu.tier}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      rightPane.innerHTML = `
+        <div data-candidate-id="${cand.candidate_id}">
+          <div class="profile-header">
+            <div class="profile-title-block">
+              <h2>${cand.profile.anonymized_name}</h2>
+              <div class="profile-headline">${cand.profile.headline}</div>
+              <div class="profile-meta-grid">
+                <div>Experience: <span class="meta-val">${cand.profile.years_of_experience.toFixed(1)} Years</span></div>
+                <div>Location: <span class="meta-val">${cand.profile.location}, ${cand.profile.country}</span></div>
+                <div>Industry: <span class="meta-val">${cand.profile.current_industry}</span></div>
+                <div>Notice Period: <span class="meta-val">${cand.redrob_signals.notice_period_days} Days</span></div>
+              </div>
+            </div>
+            <div class="score-card">
+              <div class="score-card-label">Recommendation Score</div>
+              <div class="score-card-value">${scorePct}%</div>
+              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-family: var(--font-mono)">Rank #${cand.rank}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reasoning-section">
+          <div class="reasoning-title">System Evaluation Details</div>
+          <blockquote class="reasoning-text">"${cand.reasoning}"</blockquote>
+        </div>
+
+        <div>
+          <h3 class="section-title">Summary</h3>
+          <p class="summary-text">${cand.profile.summary}</p>
+        </div>
+
+        <div>
+          <h3 class="section-title">Career History</h3>
+          <div class="timeline">
+            ${careerTimeline}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px;">
+          <div>
+            <h3 class="section-title">Verified Core Skills</h3>
+            <div class="skills-grid">
+              ${skillsList}
+            </div>
+          </div>
+          <div>
+            <h3 class="section-title">Education</h3>
+            <div>
+              ${educationList}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="section-title">Behavioral & Platform Signals</h3>
+          <div class="signals-grid">
+            <div class="card" style="padding: 16px;">
+              <table class="signal-table">
+                <tr>
+                  <td class="signal-label">Profile Completeness</td>
+                  <td class="signal-val">${cand.redrob_signals.profile_completeness_score}%</td>
+                </tr>
+                <tr>
+                  <td class="signal-label">Open to Work</td>
+                  <td class="signal-val">${cand.redrob_signals.open_to_work_flag ? 'Yes' : 'No'}</td>
+                </tr>
+                <tr>
+                  <td class="signal-label">Connection Count</td>
+                  <td class="signal-val">${cand.redrob_signals.connection_count}</td>
+                </tr>
+                <tr>
+                  <td class="signal-label">Willing to Relocate</td>
+                  <td class="signal-val">${cand.redrob_signals.willing_to_relocate ? 'Yes' : 'No'}</td>
+                </tr>
+                <tr>
+                  <td class="signal-label">Preferred Mode</td>
+                  <td class="signal-val">${cand.redrob_signals.preferred_work_mode}</td>
+                </tr>
+              </table>
+            </div>
+            <div class="card" style="padding: 16px;">
+              <table class="signal-table">
+                <tr>
+                  <td class="signal-label">GitHub Activity Score</td>
+                  <td class="signal-val">${cand.redrob_signals.github_activity_score !== -1 ? cand.redrob_signals.github_activity_score + '/100' : 'Not Linked'}</td>
+                </tr>
+                <tr>
+                  <td class="signal-label">Recruiter Response Rate</td>
+                  <td class="signal-val">${(cand.redrob_signals.recruiter_response_rate * 100).toFixed(0)}%</td>
+                </tr>
+                <tr>
+                  <td class="signal-label">Average Response Time</td>
+                  <td class="signal-val">${cand.redrob_signals.avg_response_time_hours.toFixed(1)} hrs</td>
+                </tr>
+                <tr>
+                  <td class="signal-label">Interview Attendance Rate</td>
+                  <td class="signal-val">${(cand.redrob_signals.interview_completion_rate * 100).toFixed(0)}%</td>
+                </tr>
+                <tr>
+                  <td class="signal-label">Salary Expectation</td>
+                  <td class="signal-val">${cand.redrob_signals.expected_salary_range_inr_lpa.min} - ${cand.redrob_signals.expected_salary_range_inr_lpa.max} LPA</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+      rightPane.scrollTop = 0;
+    }
+
+    // Search and Filter Listeners
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      currentPage = 1; // Reset to page 1
+      renderList();
+      
+      const filtered = candidatesData.filter(passFilter);
+      if (filtered.length > 0) {
+        const selectedId = getSelectedCandidateId();
+        if (!filtered.some(c => c.candidate_id === selectedId)) {
+          selectCandidate(filtered[0].candidate_id);
+        }
+      } else {
+        rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
+      }
+    });
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        activeFilter = e.target.getAttribute('data-filter');
+        currentPage = 1; // Reset to page 1
+        renderList();
+        
+        const filtered = candidatesData.filter(passFilter);
+        if (filtered.length > 0) {
+          selectCandidate(filtered[0].candidate_id);
+        } else {
+          rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
+        }
+      });
+    });
+
+    // JD Modal Listeners
+    openJdBtn.addEventListener('click', () => {
+      jdModal.classList.add('open');
+    });
+
+    closeJdBtn.addEventListener('click', () => {
+      jdModal.classList.remove('open');
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        jdModal.classList.remove('open');
+      }
+    });
+
+    // Load initial data
+    loadCandidates();
+  </script>
+</body>
+</html>
