@@ -6,20 +6,37 @@
 <title>Redrob AI Matching Engine Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-main: #0a0b0d;
-    --bg-pane: #121418;
-    --bg-hover: #1b1e24;
-    --bg-selected: #22262e;
-    --border-color: #20242b;
-    --text-primary: #e1e4e8;
-    --text-secondary: #8a909a;
-    --text-muted: #585d66;
-    --accent: #acb3bd;
+    /* Corporate Light Theme Colors */
+    --bg-main: #f8fafc;       /* Light Slate Background */
+    --bg-pane: #ffffff;       /* Pure White for Cards/Panels */
+    --bg-hover: #f1f5f9;      /* Light Hover State */
+    --bg-selected: #eff6ff;   /* Light Blue Active State */
+    
+    --border-color: #e2e8f0;  /* Clean, crisp borders */
+    --border-focus: #93c5fd;
+    
+    --text-primary: #1e293b;  /* Slate 800 for high readability */
+    --text-secondary: #64748b;/* Slate 500 */
+    --text-muted: #94a3b8;    /* Slate 400 */
+    
+    --accent: #2563eb;        /* Professional Royal Blue */
+    --accent-hover: #1d4ed8;
+    
+    /* Semantic Colors */
+    --gauge-green: #10b981;
+    --gauge-amber: #f59e0b;
+    --gauge-red: #ef4444;
+
+    /* Subtle Corporate Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    /* Typography */
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-    --font-serif: 'Playfair Display', Georgia, serif;
     --font-mono: 'Fira Code', monospace;
   }
 
@@ -31,7 +48,7 @@
 
   body {
     background-color: var(--bg-main);
-    color: var(--text-primary);
+    color: var(--text-secondary);
     font-family: var(--font-sans);
     height: 100vh;
     overflow: hidden;
@@ -39,53 +56,119 @@
     flex-direction: column;
   }
 
+  /* Header */
   header {
     height: 70px;
-    border-bottom: 1px solid var(--border-color);
     background-color: var(--bg-pane);
+    border-bottom: 1px solid var(--border-color);
     padding: 0 30px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    z-index: 10;
   }
 
-  .header-left h1 {
-    font-family: var(--font-serif);
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* Mobile menu button (hidden on desktop) */
+  .mobile-menu-btn {
+    display: none;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    cursor: pointer;
     font-size: 20px;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+  }
+
+  .mobile-menu-btn:hover {
+    border-color: var(--text-muted);
+  }
+
+  .header-title-block h1 {
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    color: #fff;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
   }
 
-  .header-left p {
-    font-size: 11px;
-    color: var(--text-secondary);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
-
-  .header-right {
+  .header-title-block p {
     font-size: 12px;
     color: var(--text-secondary);
-    font-family: var(--font-mono);
+    margin-top: 2px;
   }
 
   .main-layout {
     flex-grow: 1;
     display: flex;
     overflow: hidden;
+    background-color: var(--bg-main);
+    position: relative;
   }
 
-  /* Left Panel: Search, List & Fixed Pagination */
+  /* Mobile Sidebar Overlay */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 140;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    display: none;
+  }
+
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Left Panel */
   .left-pane {
     width: 420px;
-    border-right: 1px solid var(--border-color);
     background-color: var(--bg-pane);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    z-index: 5;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .mobile-close-container {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .mobile-close-container span {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 16px;
+  }
+
+  .close-sidebar-btn {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: var(--text-secondary);
+    cursor: pointer;
   }
 
   .search-container {
@@ -93,22 +176,32 @@
     border-bottom: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    background-color: var(--bg-pane);
+    z-index: 2;
   }
 
   .search-input {
     width: 100%;
-    background-color: var(--bg-main);
+    background-color: #f8fafc;
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     padding: 10px 14px;
     font-size: 13px;
     outline: none;
     font-family: var(--font-sans);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .search-input::placeholder {
+    color: var(--text-muted);
   }
 
   .search-input:focus {
     border-color: var(--accent);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   }
 
   .filter-tags {
@@ -118,28 +211,27 @@
   }
 
   .filter-btn {
-    background-color: transparent;
+    background-color: #fff;
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    padding: 4px 10px;
-    font-size: 11px;
+    padding: 6px 12px;
+    font-size: 12px;
     cursor: pointer;
     font-family: var(--font-sans);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    border-radius: 6px;
     transition: all 0.2s ease;
+    font-weight: 500;
   }
 
   .filter-btn:hover {
+    border-color: var(--text-muted);
     color: var(--text-primary);
-    border-color: var(--text-secondary);
   }
 
   .filter-btn.active {
-    background-color: var(--text-primary);
-    color: var(--bg-main);
-    border-color: var(--text-primary);
-    font-weight: 500;
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
   }
 
   .candidate-list {
@@ -147,14 +239,17 @@
     overflow-y: auto;
   }
 
+  /* Candidate List Item */
   .candidate-item {
-    padding: 18px 24px;
+    padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
+    border-left: 4px solid transparent;
+    background-color: var(--bg-pane);
     cursor: pointer;
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
   }
 
   .candidate-item:hover {
@@ -163,20 +258,20 @@
 
   .candidate-item.selected {
     background-color: var(--bg-selected);
-    border-left: 2px solid var(--text-primary);
+    border-left-color: var(--accent);
   }
 
   .rank-badge {
     font-family: var(--font-mono);
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-muted);
     line-height: 1;
-    width: 32px;
+    width: 28px;
   }
 
   .candidate-item.selected .rank-badge {
-    color: var(--text-primary);
+    color: var(--accent);
   }
 
   .item-details {
@@ -191,16 +286,20 @@
   }
 
   .item-name {
-    font-family: var(--font-sans);
     font-weight: 600;
     font-size: 14px;
-    color: #fff;
+    color: var(--text-primary);
+  }
+
+  .candidate-item.selected .item-name {
+    color: var(--accent);
   }
 
   .item-score {
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--text-secondary);
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
   .item-headline {
@@ -209,22 +308,22 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 280px;
+    max-width: 250px;
     margin-bottom: 6px;
   }
 
   .item-meta {
     display: flex;
     gap: 12px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
   }
 
   /* Fixed Pagination Footer */
   .pagination-container {
-    border-top: 1px solid var(--border-color);
     padding: 14px 20px;
     background-color: var(--bg-pane);
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -233,32 +332,32 @@
   }
 
   .page-btn {
-    background-color: transparent;
+    background-color: #fff;
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    padding: 5px 11px;
-    font-size: 11px;
+    padding: 6px 10px;
+    font-size: 12px;
     cursor: pointer;
     font-family: var(--font-mono);
-    outline: none;
+    border-radius: 4px;
     transition: all 0.2s ease;
   }
 
   .page-btn:hover:not(:disabled) {
+    border-color: var(--text-muted);
     color: var(--text-primary);
-    border-color: var(--text-secondary);
   }
 
   .page-btn.active {
-    background-color: var(--text-primary);
-    color: var(--bg-main);
-    border-color: var(--text-primary);
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
     font-weight: 600;
   }
 
   .page-btn:disabled {
     color: var(--text-muted);
-    border-color: var(--border-color);
+    background-color: #f8fafc;
     cursor: not-allowed;
   }
 
@@ -266,11 +365,10 @@
   .right-pane {
     flex-grow: 1;
     overflow-y: auto;
-    background-color: var(--bg-main);
-    padding: 40px;
+    padding: 40px 50px;
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: 40px; 
   }
 
   .empty-state {
@@ -283,103 +381,145 @@
   }
 
   .empty-state h2 {
-    font-family: var(--font-serif);
-    font-weight: 400;
-    font-size: 24px;
+    font-weight: 500;
+    font-size: 20px;
     margin-bottom: 8px;
+    color: var(--text-primary);
   }
 
   .profile-header {
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 30px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 20px;
   }
 
   .profile-title-block h2 {
-    font-family: var(--font-serif);
-    font-size: 36px;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 8px;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
   }
 
   .profile-headline {
     font-size: 16px;
     color: var(--text-secondary);
-    margin-bottom: 12px;
+    margin-bottom: 24px;
   }
 
+  /* 2x2 Clean Badges Info Grid */
   .profile-meta-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    font-size: 13px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+    gap: 12px;
+    max-width: 500px;
+  }
+
+  .meta-badge {
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 12px;
     color: var(--text-secondary);
   }
 
   .meta-val {
     font-weight: 600;
     color: var(--text-primary);
+    display: block;
+    margin-top: 4px;
+    font-size: 13px;
   }
 
-  .score-card {
-    background-color: var(--bg-pane);
-    border: 1px solid var(--border-color);
-    padding: 20px 24px;
-    text-align: right;
+  /* Circular Score Gauge Styling */
+  .score-gauge-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .gauge-svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+    position: absolute;
+  }
+
+  .gauge-bg {
+    fill: none;
+    stroke: var(--border-color);
+    stroke-width: 8;
+  }
+
+  .gauge-fill {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1); 
+  }
+
+  .gauge-text-block {
+    position: absolute;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 
-  .score-card-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-  }
-
-  .score-card-value {
+  .gauge-score {
     font-family: var(--font-mono);
-    font-size: 28px;
-    font-weight: 600;
-    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
   }
 
+  .gauge-rank {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+
+  /* Official Alert System Evaluation Box */
   .reasoning-section {
-    border-left: 2px solid var(--text-primary);
-    padding-left: 24px;
-    margin: 10px 0;
+    background-color: var(--bg-selected);
+    border: 1px solid #bfdbfe; 
+    border-left: 4px solid var(--accent);
+    padding: 20px 24px;
+    border-radius: 6px;
+    box-shadow: var(--shadow-sm);
   }
 
   .reasoning-title {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: var(--text-secondary);
+    color: var(--accent);
     margin-bottom: 8px;
+    font-weight: 700;
   }
 
   .reasoning-text {
-    font-family: var(--font-serif);
-    font-size: 18px;
-    font-style: italic;
+    font-size: 14px;
     line-height: 1.6;
     color: var(--text-primary);
   }
 
   .section-title {
-    font-family: var(--font-serif);
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
-    color: #fff;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
+    color: var(--text-primary);
     margin-bottom: 20px;
-    letter-spacing: 0.5px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .summary-text {
@@ -391,115 +531,136 @@
   /* Skills display */
   .skills-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
   }
 
   .skill-card {
+    background-color: #fff;
     border: 1px solid var(--border-color);
-    padding: 10px 14px;
-    background-color: var(--bg-pane);
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .skill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
   .skill-name {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 4px;
   }
 
+  /* Skill Level Pills */
   .skill-proficiency {
     font-size: 11px;
-    color: var(--text-secondary);
-    font-family: var(--font-mono);
-    text-transform: lowercase;
+    text-transform: capitalize;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
   }
 
+  .prof-advanced { background-color: #dcfce7; color: #166534; }
+  .prof-intermediate { background-color: #fef9c3; color: #854d0e; }
+  .prof-beginner { background-color: #f1f5f9; color: #475569; }
+
   .skill-meta {
-    font-size: 10px;
-    color: var(--text-muted);
-    margin-top: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
   }
 
   /* Experience Timeline */
   .timeline {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 32px;
     position: relative;
   }
 
   .timeline::before {
     content: "";
     position: absolute;
-    left: 8px;
+    left: 7px;
     top: 5px;
     bottom: 5px;
-    width: 1px;
+    width: 2px;
     background-color: var(--border-color);
   }
 
   .timeline-item {
     position: relative;
-    padding-left: 36px;
+    padding-left: 32px;
   }
 
   .timeline-marker {
     position: absolute;
-    left: 5px;
+    left: 2px;
     top: 6px;
-    width: 7px;
-    height: 7px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    background-color: var(--text-secondary);
+    background-color: #fff;
+    border: 2px solid var(--text-muted);
   }
 
   .timeline-item:first-child .timeline-marker {
-    background-color: #fff;
-    box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
+    border-color: var(--accent);
+    background-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
   }
 
   .timeline-header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    gap: 15px;
   }
 
   .timeline-role {
     font-size: 15px;
     font-weight: 600;
-    color: #fff;
+    color: var(--text-primary);
   }
 
   .timeline-company {
     font-size: 13px;
     color: var(--text-secondary);
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    font-weight: 500;
   }
 
   .timeline-dates {
-    font-size: 11px;
+    font-size: 12px;
     font-family: var(--font-mono);
     color: var(--text-muted);
+    flex-shrink: 0;
   }
 
   .timeline-desc {
-    font-size: 13.5px;
+    font-size: 14px;
     line-height: 1.6;
     color: var(--text-secondary);
   }
 
   /* Educational Block */
   .education-row {
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px dashed var(--border-color);
-    padding: 12px 0;
-  }
-
-  .education-row:last-child {
-    border-bottom: none;
+    gap: 15px;
   }
 
   .edu-school {
@@ -511,25 +672,34 @@
   .edu-degree {
     font-size: 13px;
     color: var(--text-secondary);
-    margin-top: 2px;
+    margin-top: 4px;
   }
 
   .edu-meta {
     text-align: right;
     font-size: 12px;
+    flex-shrink: 0;
   }
 
   .edu-years {
     font-family: var(--font-mono);
     color: var(--text-muted);
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
 
   .edu-tier {
-    font-size: 10px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  /* Bottom Split Grid */
+  .details-split-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 40px;
   }
 
   /* Signals table */
@@ -539,15 +709,24 @@
     gap: 20px;
   }
 
+  .signal-card-box {
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    padding: 0;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+
   .signal-table {
     width: 100%;
     border-collapse: collapse;
   }
 
   .signal-table td {
-    padding: 8px 12px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--border-color);
-    font-size: 12.5px;
+    font-size: 13px;
   }
 
   .signal-table tr:last-child td {
@@ -563,23 +742,26 @@
     font-family: var(--font-mono);
     text-align: right;
     color: var(--text-primary);
+    font-weight: 500;
   }
 
-  /* View JD Section button */
+  /* View JD Toggle */
   .jd-toggle-btn {
-    background: transparent;
+    background-color: #fff;
     border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    padding: 6px 14px;
-    font-size: 11px;
+    color: var(--text-primary);
+    padding: 8px 16px;
+    font-size: 12px;
     cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-weight: 500;
+    border-radius: 6px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
   }
 
   .jd-toggle-btn:hover {
-    color: #fff;
-    border-color: var(--text-secondary);
+    border-color: var(--text-muted);
+    color: var(--accent);
   }
 
   /* Overlay Modal for JD */
@@ -589,7 +771,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(10, 11, 13, 0.95);
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -615,6 +798,14 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px) scale(0.98);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .jd-modal.open .jd-modal-content {
+    transform: translateY(0) scale(1);
   }
 
   .jd-modal-header {
@@ -626,9 +817,9 @@
   }
 
   .jd-modal-title {
-    font-family: var(--font-serif);
-    font-size: 24px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
   }
 
   .close-modal-btn {
@@ -636,48 +827,103 @@
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s;
   }
 
   .close-modal-btn:hover {
-    color: #fff;
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
   }
 
   .jd-section-header {
     font-size: 13px;
-    font-weight: 700;
-    color: var(--accent);
+    font-weight: 600;
+    color: var(--text-primary);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     margin-top: 15px;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
   }
 
   .jd-body-text {
-    font-size: 13.5px;
+    font-size: 14px;
     line-height: 1.6;
     color: var(--text-secondary);
   }
 
   .jd-body-text ul {
     margin-left: 20px;
-    margin-top: 5px;
+    margin-top: 8px;
   }
 
   .jd-body-text li {
-    margin-bottom: 5px;
+    margin-bottom: 8px;
   }
+
+  /* Responsive Adjustments */
+  @media (max-width: 1200px) {
+    .left-pane { width: 360px; }
+    .details-split-grid { grid-template-columns: 1fr; gap: 40px; }
+  }
+
+  @media (max-width: 900px) {
+    /* Reveal Mobile Header UI */
+    .mobile-menu-btn { display: flex; }
+    .header-title-block p { display: none; }
+    header { padding: 0 20px; }
+    
+    /* Convert Left Pane into Slide-out Sidebar */
+    .sidebar-overlay { display: block; }
+    
+    .left-pane { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 85%; 
+      max-width: 360px; 
+      height: 100vh; 
+      border-right: none; 
+      z-index: 150; 
+      transform: translateX(-100%);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .left-pane.open { transform: translateX(0); }
+    .mobile-close-container { display: flex; }
+    
+    /* Expand Right Pane */
+    .right-pane { width: 100%; padding: 30px 20px; }
+    .signals-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .header-title-block h1 { font-size: 15px; }
+    .jd-toggle-btn { padding: 8px 10px; font-size: 11px; }
+    .profile-header { flex-direction: column; align-items: flex-start; }
+    .profile-meta-grid { grid-template-columns: 1fr; }
+    .score-gauge-container { margin-top: 10px; align-self: center; }
+  }
+
+  /* Corporate Standard Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-main); }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
 </head>
 <body>
 
   <header>
     <div class="header-left">
-      <h1>Redrob Candidate Engine</h1>
-      <p>Intelligent Candidate Discovery & Ranking Dashboard</p>
+      <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+      <div class="header-title-block">
+        <h1>Redrob Candidate Engine</h1>
+        <p>Intelligent Candidate Discovery & Ranking Dashboard</p>
+      </div>
     </div>
     <div>
       <button class="jd-toggle-btn" id="open-jd-btn">View Job Description</button>
@@ -685,9 +931,16 @@
   </header>
 
   <div class="main-layout">
-    <!-- Left panel: candidate matching list -->
-    <div class="left-pane">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <!-- Left panel (Sidebar on mobile) -->
+    <div class="left-pane" id="left-pane">
       <div class="search-container">
+        <div class="mobile-close-container">
+          <span>Candidates</span>
+          <button id="close-sidebar-btn" class="close-sidebar-btn">✕</button>
+        </div>
+        
         <input type="text" class="search-input" id="search-input" placeholder="Search by name, title, or skill...">
         
         <div class="filter-tags">
@@ -739,14 +992,14 @@
         </p>
 
         <div class="jd-section-header">Core Tech Requirements</div>
-        <p class="jd-body-text">
+        <div class="jd-body-text">
           <ul>
             <li>Production embeddings retrieval (sentence-transformers, OpenAI embeddings, etc.)</li>
             <li>Production vector databases or hybrid search infrastructure (Milvus, Qdrant, Pinecone, FAISS, Elasticsearch)</li>
             <li>Strong Python skills</li>
             <li>Hands-on experience designing evaluation frameworks (NDCG, MRR, MAP)</li>
           </ul>
-        </p>
+        </div>
 
         <div class="jd-section-header">Nice-to-Haves</div>
         <p class="jd-body-text">
@@ -754,14 +1007,14 @@
         </p>
 
         <div class="jd-section-header">Strict Exclusions (Red Flags)</div>
-        <p class="jd-body-text">
+        <div class="jd-body-text">
           <ul>
             <li>Candidates whose entire career is spent in consulting/IT service companies (TCS, Infosys, Wipro, Accenture, Cognizant, etc.)</li>
             <li>AI experience consisting only of recent LangChain tutorials.</li>
             <li>CV, Speech, or Robotics focus without significant NLP/IR exposure.</li>
             <li>Non-coding architects (has not written production code in last 18 months).</li>
           </ul>
-        </p>
+        </div>
       </div>
     </div>
   </div>
@@ -780,9 +1033,16 @@
     const paginationContainer = document.getElementById('pagination-container');
     const searchInput = document.getElementById('search-input');
     const filterBtns = document.querySelectorAll('.filter-btn');
+    
     const jdModal = document.getElementById('jd-modal');
     const openJdBtn = document.getElementById('open-jd-btn');
     const closeJdBtn = document.getElementById('close-jd-btn');
+
+    // Mobile Sidebar Elements
+    const leftPane = document.getElementById('left-pane');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const closeSidebarBtn = document.getElementById('close-sidebar-btn');
 
     // Fetch Candidates Data
     async function loadCandidates() {
@@ -804,7 +1064,6 @@
 
     // Check Filters
     function passFilter(cand) {
-      // 1. Search Query
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const name = cand.profile.anonymized_name.toLowerCase();
@@ -817,32 +1076,22 @@
         }
       }
 
-      // 2. Button Category
       if (activeFilter === 'all') return true;
-
       if (activeFilter === 'exp') {
         const yrs = cand.profile.years_of_experience;
         return yrs >= 5.0 && yrs <= 9.0;
       }
-
       if (activeFilter === 'product') {
         const services = ["tcs", "infosys", "wipro", "accenture", "cognizant", "capgemini", "tech mahindra", "hcl", "mphasis", "mindtree", "lti", "l&t infotech"];
-        let total = 0;
-        let serv = 0;
+        let total = 0, serv = 0;
         cand.career_history.forEach(job => {
           const comp = job.company.toLowerCase();
           total += job.duration_months;
-          if (services.some(s => comp.includes(s))) {
-            serv += job.duration_months;
-          }
+          if (services.some(s => comp.includes(s))) serv += job.duration_months;
         });
         return total > 0 && serv < total;
       }
-
-      if (activeFilter === 'notice') {
-        return cand.redrob_signals.notice_period_days <= 30;
-      }
-
+      if (activeFilter === 'notice') return cand.redrob_signals.notice_period_days <= 30;
       if (activeFilter === 'local') {
         const loc = cand.profile.location.toLowerCase();
         return loc.includes('pune') || loc.includes('noida') || loc.includes('delhi') || loc.includes('ncr') || loc.includes('gurgaon');
@@ -857,13 +1106,8 @@
       const totalItems = filtered.length;
       const totalPages = Math.ceil(totalItems / pageSize) || 1;
       
-      // Keep page in bound
-      if (currentPage > totalPages) {
-        currentPage = totalPages;
-      }
-      if (currentPage < 1) {
-        currentPage = 1;
-      }
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
 
       if (totalItems === 0) {
         candidateList.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 13px;">No matching candidates found.</div>`;
@@ -871,11 +1115,8 @@
         return;
       }
 
-      // Get page slice
       const startIdx = (currentPage - 1) * pageSize;
-      const endIdx = startIdx + pageSize;
-      const pageCandidates = filtered.slice(startIdx, endIdx);
-      
+      const pageCandidates = filtered.slice(startIdx, startIdx + pageSize);
       const selectedId = getSelectedCandidateId();
 
       candidateList.innerHTML = pageCandidates.map(cand => {
@@ -911,38 +1152,23 @@
 
     function renderPaginationControls(totalItems) {
       const totalPages = Math.ceil(totalItems / pageSize) || 1;
+      let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">&larr;</button>`;
       
-      let html = '';
-      
-      // Prev button
-      html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">&larr;</button>`;
-      
-      // Pagination range logic
       let startPage = Math.max(1, currentPage - 1);
       let endPage = Math.min(totalPages, startPage + 2);
-      if (endPage - startPage < 2) {
-        startPage = Math.max(1, endPage - 2);
-      }
+      if (endPage - startPage < 2) startPage = Math.max(1, endPage - 2);
       
       if (startPage > 1) {
         html += `<button class="page-btn" onclick="changePage(1)">1</button>`;
-        if (startPage > 2) {
-          html += `<span style="color: var(--text-muted); font-size: 11px; padding: 0 4px;">...</span>`;
-        }
+        if (startPage > 2) html += `<span style="color: var(--text-muted); font-size: 11px; padding: 0 4px;">...</span>`;
       }
-      
       for (let i = startPage; i <= endPage; i++) {
         html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
       }
-      
       if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-          html += `<span style="color: var(--text-muted); font-size: 11px; padding: 0 4px;">...</span>`;
-        }
+        if (endPage < totalPages - 1) html += `<span style="color: var(--text-muted); font-size: 11px; padding: 0 4px;">...</span>`;
         html += `<button class="page-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
       }
-      
-      // Next button
       html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">&rarr;</button>`;
       
       paginationContainer.innerHTML = html;
@@ -958,21 +1184,30 @@
       const cand = candidatesData.find(c => c.candidate_id === cid);
       if (!cand) return;
 
-      // Update selection in list elements
       const items = candidateList.querySelectorAll('.candidate-item');
-      // Highlight correct item
       const filtered = candidatesData.filter(passFilter);
       const startIdx = (currentPage - 1) * pageSize;
       const indexInPage = filtered.slice(startIdx, startIdx + pageSize).findIndex(c => c.candidate_id === cid);
       
       items.forEach(el => el.classList.remove('selected'));
-      if (indexInPage !== -1 && items[indexInPage]) {
-        items[indexInPage].classList.add('selected');
+      if (indexInPage !== -1 && items[indexInPage]) items[indexInPage].classList.add('selected');
+
+      // Auto-close sidebar on mobile after selection
+      if (window.innerWidth <= 900) {
+        leftPane.classList.remove('open');
+        sidebarOverlay.classList.remove('open');
       }
 
-      // Render details HTML
+      // Calculate Scores and Gauge Logic
       const scorePct = (cand.score * 100).toFixed(2);
-      
+      let gaugeColor = 'var(--gauge-red)';
+      if (scorePct >= 85) gaugeColor = 'var(--gauge-green)';
+      else if (scorePct >= 70) gaugeColor = 'var(--gauge-amber)';
+
+      const circumference = 2 * Math.PI * 45; 
+      const strokeDashoffsetTarget = circumference - (scorePct / 100) * circumference;
+
+      // HTML Renderers
       const careerTimeline = cand.career_history.map(job => {
         const endDate = job.end_date ? job.end_date : 'Present';
         return `
@@ -989,10 +1224,13 @@
       }).join('');
 
       const skillsList = cand.skills.map(s => {
+        const profClass = `prof-${s.proficiency.toLowerCase()}`;
         return `
           <div class="skill-card">
-            <div class="skill-name">${s.name}</div>
-            <div class="skill-proficiency">${s.proficiency}</div>
+            <div class="skill-header">
+              <div class="skill-name">${s.name}</div>
+              <span class="skill-proficiency ${profClass}">${s.proficiency}</span>
+            </div>
             <div class="skill-meta">${s.duration_months} months • ${s.endorsements} endorsements</div>
           </div>
         `;
@@ -1019,24 +1257,33 @@
             <div class="profile-title-block">
               <h2>${cand.profile.anonymized_name}</h2>
               <div class="profile-headline">${cand.profile.headline}</div>
+              
               <div class="profile-meta-grid">
-                <div>Experience: <span class="meta-val">${cand.profile.years_of_experience.toFixed(1)} Years</span></div>
-                <div>Location: <span class="meta-val">${cand.profile.location}, ${cand.profile.country}</span></div>
-                <div>Industry: <span class="meta-val">${cand.profile.current_industry}</span></div>
-                <div>Notice Period: <span class="meta-val">${cand.redrob_signals.notice_period_days} Days</span></div>
+                <div class="meta-badge">Experience <span class="meta-val">${cand.profile.years_of_experience.toFixed(1)} Yrs</span></div>
+                <div class="meta-badge">Location <span class="meta-val">${cand.profile.location}, ${cand.profile.country}</span></div>
+                <div class="meta-badge">Industry <span class="meta-val">${cand.profile.current_industry}</span></div>
+                <div class="meta-badge">Notice Period <span class="meta-val">${cand.redrob_signals.notice_period_days} Days</span></div>
               </div>
             </div>
-            <div class="score-card">
-              <div class="score-card-label">Recommendation Score</div>
-              <div class="score-card-value">${scorePct}%</div>
-              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-family: var(--font-mono)">Rank #${cand.rank}</div>
+
+            <div class="score-gauge-container">
+              <svg class="gauge-svg" viewBox="0 0 100 100">
+                <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                <circle class="gauge-fill" id="animated-gauge" cx="50" cy="50" r="45" 
+                        style="stroke: ${gaugeColor}; stroke-dasharray: ${circumference}; stroke-dashoffset: ${circumference};">
+                </circle>
+              </svg>
+              <div class="gauge-text-block">
+                <div class="gauge-score">${scorePct}%</div>
+                <div class="gauge-rank">Rank #${cand.rank}</div>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="reasoning-section">
           <div class="reasoning-title">System Evaluation Details</div>
-          <blockquote class="reasoning-text">"${cand.reasoning}"</blockquote>
+          <div class="reasoning-text">"${cand.reasoning}"</div>
         </div>
 
         <div>
@@ -1051,7 +1298,7 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px;">
+        <div class="details-split-grid">
           <div>
             <h3 class="section-title">Verified Core Skills</h3>
             <div class="skills-grid">
@@ -1069,72 +1316,44 @@
         <div>
           <h3 class="section-title">Behavioral & Platform Signals</h3>
           <div class="signals-grid">
-            <div class="card" style="padding: 16px;">
+            <div class="signal-card-box">
               <table class="signal-table">
-                <tr>
-                  <td class="signal-label">Profile Completeness</td>
-                  <td class="signal-val">${cand.redrob_signals.profile_completeness_score}%</td>
-                </tr>
-                <tr>
-                  <td class="signal-label">Open to Work</td>
-                  <td class="signal-val">${cand.redrob_signals.open_to_work_flag ? 'Yes' : 'No'}</td>
-                </tr>
-                <tr>
-                  <td class="signal-label">Connection Count</td>
-                  <td class="signal-val">${cand.redrob_signals.connection_count}</td>
-                </tr>
-                <tr>
-                  <td class="signal-label">Willing to Relocate</td>
-                  <td class="signal-val">${cand.redrob_signals.willing_to_relocate ? 'Yes' : 'No'}</td>
-                </tr>
-                <tr>
-                  <td class="signal-label">Preferred Mode</td>
-                  <td class="signal-val">${cand.redrob_signals.preferred_work_mode}</td>
-                </tr>
+                <tr><td class="signal-label">Profile Completeness</td><td class="signal-val">${cand.redrob_signals.profile_completeness_score}%</td></tr>
+                <tr><td class="signal-label">Open to Work</td><td class="signal-val">${cand.redrob_signals.open_to_work_flag ? 'Yes' : 'No'}</td></tr>
+                <tr><td class="signal-label">Connection Count</td><td class="signal-val">${cand.redrob_signals.connection_count}</td></tr>
+                <tr><td class="signal-label">Willing to Relocate</td><td class="signal-val">${cand.redrob_signals.willing_to_relocate ? 'Yes' : 'No'}</td></tr>
+                <tr><td class="signal-label">Preferred Mode</td><td class="signal-val">${cand.redrob_signals.preferred_work_mode}</td></tr>
               </table>
             </div>
-            <div class="card" style="padding: 16px;">
+            <div class="signal-card-box">
               <table class="signal-table">
-                <tr>
-                  <td class="signal-label">GitHub Activity Score</td>
-                  <td class="signal-val">${cand.redrob_signals.github_activity_score !== -1 ? cand.redrob_signals.github_activity_score + '/100' : 'Not Linked'}</td>
-                </tr>
-                <tr>
-                  <td class="signal-label">Recruiter Response Rate</td>
-                  <td class="signal-val">${(cand.redrob_signals.recruiter_response_rate * 100).toFixed(0)}%</td>
-                </tr>
-                <tr>
-                  <td class="signal-label">Average Response Time</td>
-                  <td class="signal-val">${cand.redrob_signals.avg_response_time_hours.toFixed(1)} hrs</td>
-                </tr>
-                <tr>
-                  <td class="signal-label">Interview Attendance Rate</td>
-                  <td class="signal-val">${(cand.redrob_signals.interview_completion_rate * 100).toFixed(0)}%</td>
-                </tr>
-                <tr>
-                  <td class="signal-label">Salary Expectation</td>
-                  <td class="signal-val">${cand.redrob_signals.expected_salary_range_inr_lpa.min} - ${cand.redrob_signals.expected_salary_range_inr_lpa.max} LPA</td>
-                </tr>
+                <tr><td class="signal-label">GitHub Activity</td><td class="signal-val">${cand.redrob_signals.github_activity_score !== -1 ? cand.redrob_signals.github_activity_score + '/100' : 'Not Linked'}</td></tr>
+                <tr><td class="signal-label">Recruiter Response Rate</td><td class="signal-val">${(cand.redrob_signals.recruiter_response_rate * 100).toFixed(0)}%</td></tr>
+                <tr><td class="signal-label">Average Response Time</td><td class="signal-val">${cand.redrob_signals.avg_response_time_hours.toFixed(1)} hrs</td></tr>
+                <tr><td class="signal-label">Interview Attendance</td><td class="signal-val">${(cand.redrob_signals.interview_completion_rate * 100).toFixed(0)}%</td></tr>
+                <tr><td class="signal-label">Salary Expectation</td><td class="signal-val">${cand.redrob_signals.expected_salary_range_inr_lpa.min} - ${cand.redrob_signals.expected_salary_range_inr_lpa.max} LPA</td></tr>
               </table>
             </div>
           </div>
         </div>
       `;
       rightPane.scrollTop = 0;
+
+      setTimeout(() => {
+        const gauge = document.getElementById('animated-gauge');
+        if (gauge) gauge.style.strokeDashoffset = strokeDashoffsetTarget;
+      }, 50);
     }
 
     // Search and Filter Listeners
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
-      currentPage = 1; // Reset to page 1
+      currentPage = 1;
       renderList();
-      
       const filtered = candidatesData.filter(passFilter);
       if (filtered.length > 0) {
         const selectedId = getSelectedCandidateId();
-        if (!filtered.some(c => c.candidate_id === selectedId)) {
-          selectCandidate(filtered[0].candidate_id);
-        }
+        if (!filtered.some(c => c.candidate_id === selectedId)) selectCandidate(filtered[0].candidate_id);
       } else {
         rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
       }
@@ -1145,30 +1364,39 @@
         filterBtns.forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
         activeFilter = e.target.getAttribute('data-filter');
-        currentPage = 1; // Reset to page 1
+        currentPage = 1;
         renderList();
-        
         const filtered = candidatesData.filter(passFilter);
-        if (filtered.length > 0) {
-          selectCandidate(filtered[0].candidate_id);
-        } else {
-          rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
-        }
+        if (filtered.length > 0) selectCandidate(filtered[0].candidate_id);
+        else rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
       });
     });
 
+    // Mobile Sidebar Listeners
+    function openSidebar() {
+      leftPane.classList.add('open');
+      sidebarOverlay.classList.add('open');
+    }
+    
+    function closeSidebar() {
+      leftPane.classList.remove('open');
+      sidebarOverlay.classList.remove('open');
+    }
+
+    mobileMenuBtn.addEventListener('click', openSidebar);
+    closeSidebarBtn.addEventListener('click', closeSidebar);
+    sidebarOverlay.addEventListener('click', closeSidebar);
+
     // JD Modal Listeners
-    openJdBtn.addEventListener('click', () => {
-      jdModal.classList.add('open');
+    openJdBtn.addEventListener('click', () => jdModal.classList.add('open'));
+    closeJdBtn.addEventListener('click', () => jdModal.classList.remove('open'));
+    jdModal.addEventListener('click', (e) => {
+      if (e.target === jdModal) jdModal.classList.remove('open');
     });
-
-    closeJdBtn.addEventListener('click', () => {
-      jdModal.classList.remove('open');
-    });
-
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         jdModal.classList.remove('open');
+        closeSidebar();
       }
     });
 
