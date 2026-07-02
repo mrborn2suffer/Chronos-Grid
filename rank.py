@@ -592,6 +592,8 @@ def load_candidates_from_file(file_path):
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read(100).strip()
+                if content.startswith("\ufeff"):
+                    content = content[1:]
                 if content.startswith("["):
                     is_jsonl = False
         except:
