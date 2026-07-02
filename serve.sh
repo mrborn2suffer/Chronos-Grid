@@ -15,12 +15,15 @@ echo "Opening browser at: http://localhost:$PORT"
 echo "Press Ctrl+C to stop the server."
 echo "=========================================================="
 
-# Try to open in default browser automatically
-if command -v xdg-open > /dev/null; then
-    xdg-open "http://localhost:$PORT" &
-elif command -v open > /dev/null; then
-    open "http://localhost:$PORT" &
-fi
+# Try to open in default browser automatically after a short delay to allow port binding
+(
+    sleep 0.8
+    if command -v xdg-open > /dev/null; then
+        xdg-open "http://localhost:$PORT" >/dev/null 2>&1
+    elif command -v open > /dev/null; then
+        open "http://localhost:$PORT" >/dev/null 2>&1
+    fi
+) &
 
 # Run the custom python server
 python3 serve.py
