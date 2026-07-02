@@ -374,6 +374,15 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             ranked_cands = rank.rank_candidates(merged_cands, top_n=-1)
             save_candidates_to_db(ranked_cands, replace=True)
             
+            # Write/overwrite candidates.jsonl in the project root with the imported/merged candidates
+            try:
+                with open("candidates.jsonl", "w", encoding="utf-8") as f_jsonl:
+                    for cand in merged_cands:
+                        f_jsonl.write(json.dumps(cand) + "\n")
+                print("Successfully updated candidates.jsonl in project root.")
+            except Exception as e:
+                print(f"Failed to write candidates.jsonl in project root: {e}")
+            
             result = query_candidates(page=1, limit=20)
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')

@@ -626,6 +626,89 @@ def load_candidates_from_file(file_path):
                 except Exception as e:
                     print(f"JSON parse error in {file_path}: {e}")
                     return []
+
+        # Normalize candidates (ensure structure matches engine specs)
+        import time
+        valid_cands = []
+        for idx, cand in enumerate(candidates or []):
+            if not isinstance(cand, dict):
+                continue
+            
+            # ID Normalization
+            cid = None
+            for id_key in ["candidate_id", "id", "cid", "candidateId", "Candidate ID"]:
+                if id_key in cand and cand[id_key] is not None:
+                    cid = str(cand[id_key]).strip()
+                    break
+            if not cid:
+                cid = f"cand_{idx}_{int(time.time())}"
+            cand["candidate_id"] = cid
+            
+            # Profile normalization
+            if "profile" not in cand or not isinstance(cand["profile"], dict):
+                cand["profile"] = {}
+            profile_fields = [
+                "anonymized_name", "headline", "summary", "years_of_experience", 
+                "location", "country", "current_title", "current_company", 
+                "current_industry", "current_company_size"
+            ]
+            for fld in profile_fields:
+                if fld in cand and cand[fld] is not None:
+                    if fld not in cand["profile"]:
+                        cand["profile"][fld] = cand[fld]
+            
+            # Signals normalization
+            if "redrob_signals" not in cand or not isinstance(cand["redrob_signals"], dict):
+                cand["redrob_signals"] = {}
+            signal_fields = ["notice_period_days", "open_to_work_flag", "platform_activity_score"]
+            for fld in signal_fields:
+                if fld in cand and cand[fld] is not None:
+                    if fld not in cand["redrob_signals"]:
+                        cand["redrob_signals"][fld] = cand[fld]
+            
+            # Skills normalization (ensure list of dicts with name & duration)
+            if "skills" in cand:
+                if isinstance(cand["skills"], str):
+                    raw_skills = [s.strip() for s in cand["skills"].split(",") if s.strip()]
+                    cand["skills"] = [{"name": s, "duration_months": 12} for s in raw_skills]
+                elif isinstance(cand["skills"], list):
+                    norm_skills = []
+                    for s in cand["skills"]:
+                        if isinstance(s, dict):
+                            norm_skills.append(s)
+                        elif isinstance(s, str) and s.strip():
+                            norm_skills.append({"name": s.strip(), "duration_months": 12})
+                    cand["skills"] = norm_skills
+                else:
+                    cand["skills"] = []
+            else:
+                cand["skills"] = []
+            
+            # Career and education list validation
+            if "career_history" not in cand or not isinstance(cand["career_history"], list):
+                cand["career_history"] = []
+            else:
+                cand["career_history"] = [job for job in cand["career_history"] if isinstance(job, dict)]
+                
+            if "education" not in cand or not isinstance(cand["education"], list):
+                cand["education"] = []
+            else:
+                cand["education"] = [edu for edu in cand["education"] if isinstance(edu, dict)]
+                
+            valid_cands.append(cand)
+        candidates = valid_cands
+        
+        # If input has a .json extension, auto-save a converted .jsonl version in the same folder
+        if ext == '.json':
+            jsonl_path = file_path + 'l'
+            try:
+                with open(jsonl_path, "w", encoding="utf-8") as f_jsonl:
+                    for cand in candidates:
+                        f_jsonl.write(json.dumps(cand) + "\n")
+                print(f"🔄 Auto-converted and saved normalized candidates to JSONL: {jsonl_path}")
+            except Exception as e:
+                print(f"Failed to auto-save JSONL file {jsonl_path}: {e}")
+                
         return candidates
         
     elif ext == '.xml':
