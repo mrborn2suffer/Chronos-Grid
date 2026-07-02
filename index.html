@@ -1216,6 +1216,7 @@
     const replaceCheckbox = document.getElementById('replace-checkbox');
     const resetDbBtn = document.getElementById('reset-db-btn');
     const importStatus = document.getElementById('import-status');
+    const scoreFilterSelect = document.getElementById('score-filter-select');
 
     // Mobile Sidebar Elements
     const leftPane = document.getElementById('left-pane');
@@ -1238,7 +1239,6 @@
         btn.style.pointerEvents = isEmpty ? 'none' : 'auto';
       });
 
-      const scoreFilterSelect = document.getElementById('score-filter-select');
       if (scoreFilterSelect) {
         scoreFilterSelect.disabled = isEmpty;
         scoreFilterSelect.style.opacity = isEmpty ? '0.35' : '1';
@@ -1807,7 +1807,6 @@
       if (allBtn) allBtn.classList.add('active');
       
       if(searchInput) searchInput.value = '';
-      const scoreFilterSelect = document.getElementById('score-filter-select');
       if (scoreFilterSelect) scoreFilterSelect.value = '0';
     }
 
