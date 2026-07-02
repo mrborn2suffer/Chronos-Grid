@@ -1104,19 +1104,117 @@
     border-color: var(--text-secondary);
   }
   .filter-select:focus { border-color: var(--accent); }
+
+  @media (max-width: 900px) {
+    .header-right-app-name {
+      display: none !important;
+    }
+  }
+
+  /* Windows-style Print Modal layout */
+  .windows-print-container {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+    margin-top: 10px;
+  }
+
+  .print-settings-col {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+  }
+
+  .print-preview-col {
+    flex: 0.8;
+    background-color: var(--bg-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    position: relative;
+    min-height: 280px;
+  }
+
+  .preview-page-mock {
+    background-color: #fff;
+    border: 1px dashed var(--text-muted);
+    box-shadow: 0 4px 12px rgba(15,23,42,0.12);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    overflow: hidden;
+  }
+
+  .preview-page-mock.portrait {
+    width: 140px;
+    height: 200px;
+  }
+
+  .preview-page-mock.landscape {
+    width: 200px;
+    height: 140px;
+  }
+
+  .mock-header-line {
+    height: 6px;
+    background-color: #cbd5e1;
+    border-radius: 2px;
+    margin-bottom: 4px;
+    width: 60%;
+  }
+
+  .mock-sub-line {
+    height: 4px;
+    background-color: #f1f5f9;
+    border-radius: 1px;
+    margin-bottom: 8px;
+    width: 40%;
+  }
+
+  .mock-table-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .mock-bar {
+    height: 4px;
+    background-color: #e2e8f0;
+    border-radius: 1px;
+    flex: 1;
+  }
+
+  .mock-bar.short {
+    flex: 0.5;
+  }
 </style>
 </head>
 <body>
 
   <header>
-    <div class="header-left">
+    <div class="header-left" style="display: flex; align-items: center; gap: 8px;">
       <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
-      <div class="header-title-block">
-        <h1>Redrob Candidate Engine</h1>
-        <p>Intelligent Candidate Discovery & Ranking Dashboard</p>
-      </div>
+      <!-- Connected Node Network Logo Symbol -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" style="display: inline-block; vertical-align: middle;">
+        <circle cx="12" cy="12" r="3" />
+        <circle cx="12" cy="4" r="2.5" />
+        <circle cx="5" cy="18" r="2.5" />
+        <circle cx="19" cy="18" r="2.5" />
+        <line x1="12" y1="7" x2="12" y2="9" />
+        <line x1="6.8" y1="16.2" x2="10.2" y2="13.8" />
+        <line x1="17.2" y1="16.2" x2="13.8" y2="13.8" />
+      </svg>
+      <span style="font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.5px;">Redrob</span>
     </div>
     <div style="display: flex; gap: 12px; align-items: center; position: relative;">
+      <span class="header-right-app-name" style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-right: 8px; border-right: 1px solid var(--border-color); padding-right: 14px; letter-spacing: 0.5px; display: inline-block;">Redrob Candidate Engine</span>
       <button class="jd-toggle-btn" id="open-jd-btn">View Job Description</button>
       <button class="btn-primary" id="export-pdf-btn">Export Shortlist</button>
     </div>
@@ -1134,12 +1232,12 @@
     </div>
 
     <div class="left-pane" id="left-pane">
-      <div class="import-container" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-pane);">
+      <div class="import-container" id="sidebar-import-container" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-pane); display: none;">
         <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600;">Import Candidates</div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <label style="border: 1px dashed var(--border-color); padding: 10px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: border-color 0.2s ease; background-color: var(--bg-main);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border-color)'">
-            <span style="font-size: 12px; color: var(--text-secondary);">Upload JSON, CSV, PDF, XML, YAML...</span>
-            <input type="file" id="import-file-input" style="display: none;" accept=".json,.jsonl,.csv,.xml,.yaml,.yml,.pdf">
+            <span style="font-size: 12px; color: var(--text-secondary);">Upload JSON, CSV, or PDF...</span>
+            <input type="file" id="import-file-input" style="display: none;" accept=".json,.jsonl,.csv,.pdf">
           </label>
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <label style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
@@ -1242,71 +1340,105 @@
 
   <!-- Export Shortlist Modal -->
   <div class="export-modal" id="export-modal">
-    <div class="export-modal-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 20px;">
-        <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">Export Shortlist Configuration</h3>
-        <button class="close-modal-btn" id="close-export-btn" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 12px; padding: 4px 8px; border-radius: 4px;">close [esc]</button>
+    <div class="export-modal-content" style="width: 680px; max-width: 95%;">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 18px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <!-- SVG Print Icon -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+            <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 14h12v8H6z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; font-family: var(--font-sans);">Print Shortlist Summary</h3>
+        </div>
+        <button class="close-modal-btn" id="close-export-btn" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 12px; padding: 4px 8px; border-radius: 4px;">✕</button>
       </div>
-      
-      <!-- Modal Form Controls -->
-      <div style="display: flex; flex-direction: column; gap: 16px; text-align: left;">
-        <!-- Score Threshold Section -->
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">Minimum Score % Threshold</label>
-          <select id="export-score-select" style="padding: 8px 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none;">
-            <option value="75" selected>Score &ge; 75% (Default)</option>
-            <option value="80">Score &ge; 80%</option>
-            <option value="85">Score &ge; 85%</option>
-            <option value="70">Score &ge; 70%</option>
-            <option value="custom">Custom %...</option>
-          </select>
-          <div id="export-score-custom-group" style="display: none; align-items: center; gap: 8px; margin-top: 6px;">
-            <span style="font-size: 12px; color: var(--text-secondary);">Enter score:</span>
-            <input type="number" id="export-score-input" min="0" max="100" value="75" style="width: 70px; padding: 6px 10px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none; font-family: var(--font-mono);">
-            <span style="font-size: 12px; color: var(--text-secondary);">%</span>
+
+      <!-- Two-column Setup -->
+      <div class="windows-print-container">
+        <!-- Settings (Left Panel) -->
+        <div class="print-settings-col">
+          <!-- Score Threshold -->
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Match Score Threshold</label>
+            <select id="export-score-select" style="padding: 8px 10px; font-size: 12.5px; border-radius: 4px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none;">
+              <option value="75" selected>Score &ge; 75% (Default)</option>
+              <option value="80">Score &ge; 80%</option>
+              <option value="85">Score &ge; 85%</option>
+              <option value="70">Score &ge; 70%</option>
+              <option value="custom">Custom %...</option>
+            </select>
+            <div id="export-score-custom-group" style="display: none; align-items: center; gap: 8px; margin-top: 4px;">
+              <span style="font-size: 11px; color: var(--text-secondary);">Score:</span>
+              <input type="number" id="export-score-input" min="0" max="100" value="75" style="width: 60px; padding: 5px 8px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none; font-family: var(--font-mono);">
+              <span style="font-size: 11px; color: var(--text-secondary);">%</span>
+            </div>
+          </div>
+
+          <!-- Shortlist limit -->
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Candidates Limit</label>
+            <select id="export-limit-select" style="padding: 8px 10px; font-size: 12.5px; border-radius: 4px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none;">
+              <option value="-1" selected>All qualifying candidates</option>
+              <option value="10">Top 10 candidates only</option>
+              <option value="50">Top 50 candidates only</option>
+              <option value="100">Top 100 candidates only</option>
+              <option value="custom">Custom count...</option>
+            </select>
+            <div id="export-limit-custom-group" style="display: none; align-items: center; gap: 8px; margin-top: 4px;">
+              <span style="font-size: 11px; color: var(--text-secondary);">Limit:</span>
+              <input type="number" id="export-limit-input" min="1" value="50" style="width: 80px; padding: 5px 8px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none; font-family: var(--font-mono);">
+            </div>
+          </div>
+
+          <!-- Orientation -->
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Orientation</label>
+            <select id="export-orientation" style="padding: 8px 10px; font-size: 12.5px; border-radius: 4px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none;">
+              <option value="portrait" selected>Portrait</option>
+              <option value="landscape">Landscape</option>
+            </select>
+          </div>
+
+          <!-- Paper Size -->
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Paper Size</label>
+            <select id="export-paper-size" style="padding: 8px 10px; font-size: 12.5px; border-radius: 4px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none;">
+              <option value="A4" selected>A4</option>
+              <option value="Letter">Letter</option>
+              <option value="Legal">Legal</option>
+            </select>
           </div>
         </div>
 
-        <!-- Limit Count Section -->
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">Maximum Candidates Limit</label>
-          <select id="export-limit-select" style="padding: 8px 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none;">
-            <option value="-1" selected>All matching candidates</option>
-            <option value="10">Top 10 candidates</option>
-            <option value="50">Top 50 candidates</option>
-            <option value="100">Top 100 candidates</option>
-            <option value="custom">Custom limit...</option>
-          </select>
-          <div id="export-limit-custom-group" style="display: none; align-items: center; gap: 8px; margin-top: 6px;">
-            <span style="font-size: 12px; color: var(--text-secondary);">Enter count:</span>
-            <input type="number" id="export-limit-input" min="1" value="50" style="width: 90px; padding: 6px 10px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none; font-family: var(--font-mono);">
+        <!-- Preview Mockup (Right Panel) -->
+        <div class="print-preview-col">
+          <div id="print-preview-mock" class="preview-page-mock portrait">
+            <!-- Mock header -->
+            <div class="mock-header-line"></div>
+            <div class="mock-sub-line"></div>
+            <!-- Mock Table Rows -->
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <div class="mock-table-row"><div class="mock-bar short"></div><div class="mock-bar"></div><div class="mock-bar short"></div></div>
+              <div class="mock-table-row"><div class="mock-bar short"></div><div class="mock-bar"></div><div class="mock-bar short"></div></div>
+              <div class="mock-table-row"><div class="mock-bar short"></div><div class="mock-bar"></div><div class="mock-bar short"></div></div>
+              <div class="mock-table-row"><div class="mock-bar short"></div><div class="mock-bar"></div><div class="mock-bar short"></div></div>
+              <div class="mock-table-row"><div class="mock-bar short"></div><div class="mock-bar"></div><div class="mock-bar short"></div></div>
+              <div class="mock-table-row"><div class="mock-bar short"></div><div class="mock-bar"></div><div class="mock-bar short"></div></div>
+              <div class="mock-table-row"><div class="mock-bar short"></div><div class="mock-bar"></div><div class="mock-bar short"></div></div>
+            </div>
           </div>
-        </div>
-
-        <!-- Page Orientation Section -->
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">Page Orientation</label>
-          <select id="export-orientation" style="padding: 8px 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none;">
-            <option value="portrait" selected>Portrait (Vertical)</option>
-            <option value="landscape">Landscape (Horizontal)</option>
-          </select>
-        </div>
-
-        <!-- Paper Size Section -->
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">Paper Size</label>
-          <select id="export-paper-size" style="padding: 8px 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); outline: none;">
-            <option value="A4" selected>A4</option>
-            <option value="Letter">Letter</option>
-            <option value="Legal">Legal</option>
-          </select>
+          <!-- Label under mockup -->
+          <div style="margin-top: 12px; font-size: 11px; font-weight: 600; color: var(--text-secondary);" id="preview-page-label">
+            A4 Portrait
+          </div>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 20px;">
+      <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 14px; margin-top: 18px;">
         <button id="cancel-export-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 8px 16px; font-size: 12px; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--text-secondary)'; this.style.backgroundColor='var(--bg-hover)';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.backgroundColor='transparent';">Cancel</button>
-        <button id="confirm-export-btn" class="btn-primary" style="padding: 8px 16px;">Generate Report</button>
+        <button id="confirm-export-btn" class="btn-primary" style="padding: 8px 20px;">Print</button>
       </div>
     </div>
   </div>
@@ -1347,6 +1479,12 @@
     function updateUIState() {
       const isEmpty = (totalCandidatesCount === 0);
 
+      // Hide or show the sidebar import container dynamically
+      const sidebarImportContainer = document.getElementById('sidebar-import-container');
+      if (sidebarImportContainer) {
+        sidebarImportContainer.style.display = isEmpty ? 'none' : 'block';
+      }
+
       if (searchInput) {
         searchInput.disabled = isEmpty;
         searchInput.style.opacity = isEmpty ? '0.35' : '1';
@@ -1386,19 +1524,28 @@
             </svg>
             <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">No Dataset Loaded</div>
             <p style="font-size: 11px; line-height: 1.4; color: var(--text-muted); max-width: 180px; margin: 0 auto;">
-              Drop or select a candidate list file (JSON, CSV, PDF, XML, YAML) in the sidebar to begin matching.
+              Upload a candidate list file (JSON, CSV, or PDF) in the central pane to begin.
             </p>
           </div>
         `;
         if (rightPane) {
           rightPane.innerHTML = `
-            <div class="empty-state" style="padding: 120px 20px; text-align: center;">
-              <h2 style="font-size: 20px; color: var(--text-primary); margin-bottom: 10px;">Classification Inactive</h2>
-              <p style="color: var(--text-secondary); max-width: 320px; margin: 0 auto; font-size: 13px; line-height: 1.6;">
-                Please import a fresh dataset of candidates from the sidebar to activate ranking and pedigree analysis.
-              </p>
+            <div class="empty-state" style="padding: 60px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+              <div class="empty-state-upload" id="empty-state-upload" style="border: 2px dashed var(--border-color); padding: 48px 32px; border-radius: 12px; background-color: var(--bg-pane); text-align: center; width: 100%; max-width: 440px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--shadow-sm);">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" style="margin-bottom: 16px; opacity: 0.85;">
+                  <path d="M12 16V11M12 11L9.5 13.5M12 11L14.5 13.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20 16.58C21.17 15.65 22 14.19 22 12.5C22 9.46 19.54 7 16.5 7C16.29 7 16.08 7.01 15.88 7.03C15.02 4.07 12.26 2 9 2C4.58 2 1 5.58 1 10C1 12.58 2.22 14.88 4.12 16.33" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0;">Import Candidates</h3>
+                <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0 0 20px 0;">
+                  Drag & drop your candidate list file (JSON, CSV, or PDF) here,<br>or click to select file.
+                </p>
+                <input type="file" id="center-file-input" style="display: none;" accept=".json,.jsonl,.csv,.pdf">
+                <button class="btn-primary" style="padding: 8px 20px; font-size: 12px;">Select File</button>
+              </div>
             </div>
           `;
+          setupDragAndDrop();
         }
         if (paginationContainer) paginationContainer.innerHTML = '';
       }
@@ -1997,68 +2144,132 @@
       if (processingOverlay) processingOverlay.style.display = 'none';
     }
 
+    function setupDragAndDrop() {
+      const dropZone = document.getElementById('empty-state-upload');
+      const centerInput = document.getElementById('center-file-input');
+      
+      if (!dropZone) return;
+      
+      dropZone.addEventListener('click', () => {
+        if (centerInput) centerInput.click();
+      });
+      
+      if (centerInput) {
+        centerInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) handleUploadProcess(file, false);
+        });
+      }
+      
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--accent)';
+        dropZone.style.backgroundColor = 'var(--bg-hover)';
+      });
+      
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = 'var(--border-color)';
+        dropZone.style.backgroundColor = 'var(--bg-pane)';
+      });
+      
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--border-color)';
+        dropZone.style.backgroundColor = 'var(--bg-pane)';
+        const file = e.dataTransfer.files[0];
+        if (file) handleUploadProcess(file, false);
+      });
+    }
+
+    async function handleUploadProcess(file, replaceMode) {
+      if (importStatus) {
+        importStatus.style.display = 'block';
+        importStatus.style.color = 'var(--text-secondary)';
+        importStatus.innerText = 'Uploading and processing ' + file.name + '...';
+      }
+      showProcessingOverlay(`Uploading and processing ${file.name}...`);
+
+      if (candidateList) {
+        candidateList.innerHTML = `
+          <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
+            <div class="spinner-monotonic"></div>
+            <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-primary);">Evaluating candidates list...</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-family: var(--font-mono)">${file.name}</div>
+          </div>
+        `;
+      }
+      if (paginationContainer) paginationContainer.innerHTML = '';
+
+      try {
+        const url = `/api/import?filename=${encodeURIComponent(file.name)}&replace=${replaceMode}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
+          body: file
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || 'Server error occurred during import.');
+        }
+
+        const data = await response.json();
+        candidatesData = data.candidates || [];
+        totalCandidatesCount = data.total_count || 0;
+        totalPagesCount = data.total_pages || 1;
+        
+        if (importStatus) {
+          importStatus.style.color = 'var(--text-primary)';
+          importStatus.innerText = `Successfully imported and ranked ${file.name}.`;
+          setTimeout(() => { importStatus.style.display = 'none'; }, 4000);
+        }
+
+        resetSearchUI();
+        await loadCandidates(false);
+      } catch (err) {
+        if (importStatus) {
+          importStatus.style.color = '#ff6b6b';
+          importStatus.innerText = `Error: ${err.message}`;
+        }
+        await loadCandidates(false);
+      } finally {
+        hideProcessingOverlay();
+        if (importFileInput) importFileInput.value = '';
+      }
+    }
+
     if (importFileInput) {
       importFileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        if (importStatus) {
-          importStatus.style.display = 'block';
-          importStatus.style.color = 'var(--text-secondary)';
-          importStatus.innerText = 'Uploading and processing ' + file.name + '...';
-        }
-        showProcessingOverlay(`Uploading and processing ${file.name}...`);
-
-        if (candidateList) {
-          candidateList.innerHTML = `
-            <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
-              <div class="spinner-monotonic"></div>
-              <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-primary);">Evaluating candidates list...</div>
-              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-family: var(--font-mono)">${file.name}</div>
-            </div>
-          `;
-        }
-        if (paginationContainer) paginationContainer.innerHTML = '';
-
         const replaceMode = replaceCheckbox ? replaceCheckbox.checked : false;
-        
-        try {
-          const url = `/api/import?filename=${encodeURIComponent(file.name)}&replace=${replaceMode}`;
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': file.type || 'application/octet-stream' },
-            body: file
-          });
-
-          if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || 'Server error occurred during import.');
-          }
-
-          const data = await response.json();
-          candidatesData = data.candidates || [];
-          totalCandidatesCount = data.total_count || 0;
-          totalPagesCount = data.total_pages || 1;
-          
-          if (importStatus) {
-            importStatus.style.color = 'var(--text-primary)';
-            importStatus.innerText = `Successfully imported and ranked ${file.name}.`;
-            setTimeout(() => { importStatus.style.display = 'none'; }, 4000);
-          }
-
-          resetSearchUI();
-          await loadCandidates(false);
-        } catch (err) {
-          if (importStatus) {
-            importStatus.style.color = '#ff6b6b';
-            importStatus.innerText = `Error: ${err.message}`;
-          }
-          await loadCandidates(false);
-        } finally {
-          hideProcessingOverlay();
-          importFileInput.value = '';
-        }
+        handleUploadProcess(file, replaceMode);
       });
+    }
+
+    function updatePreviewMockup() {
+      const orientation = (exportOrientation && exportOrientation.value) || 'portrait';
+      const paperSize = (exportPaperSize && exportPaperSize.value) || 'A4';
+      const mock = document.getElementById('print-preview-mock');
+      const label = document.getElementById('preview-page-label');
+      
+      if (mock && label) {
+        if (orientation === 'landscape') {
+          mock.classList.remove('portrait');
+          mock.classList.add('landscape');
+        } else {
+          mock.classList.remove('landscape');
+          mock.classList.add('portrait');
+        }
+        label.textContent = `${paperSize} ${orientation.charAt(0).toUpperCase() + orientation.slice(1)}`;
+      }
+    }
+
+    if (exportOrientation) {
+      exportOrientation.addEventListener('change', updatePreviewMockup);
+    }
+    if (exportPaperSize) {
+      exportPaperSize.addEventListener('change', updatePreviewMockup);
     }
 
     if (resetDbBtn) {
