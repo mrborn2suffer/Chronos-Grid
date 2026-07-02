@@ -2,6 +2,7 @@
 candidates.jsonl
 candidates.jsonl.gz
 sample_candidates.json
+sample data.json
 sample_submission.csv
 
 # Python caches

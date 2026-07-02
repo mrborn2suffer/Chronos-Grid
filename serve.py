@@ -278,7 +278,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
                 
-            # Normalize candidate ID and default structural blocks to guarantee safe evaluation
+            # Normalize candidate ID and map flat structures to nested blocks to guarantee safe evaluation
             import time
             valid_cands = []
             for idx, cand in enumerate(imported_cands or []):
@@ -295,15 +295,44 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     cid = f"cand_{idx}_{int(time.time())}"
                 cand["candidate_id"] = cid
                 
-                # Ensure default sub-blocks exist
+                # Normalize profile sub-block (handle both flat and nested schemas)
                 if "profile" not in cand or not isinstance(cand["profile"], dict):
                     cand["profile"] = {}
-                if "career_history" not in cand or not isinstance(cand["career_history"], list):
-                    cand["career_history"] = []
-                if "skills" not in cand or not isinstance(cand["skills"], list):
-                    cand["skills"] = []
+                
+                profile_fields = [
+                    "anonymized_name", "headline", "summary", "years_of_experience", 
+                    "location", "country", "current_title", "current_company", 
+                    "current_industry", "current_company_size"
+                ]
+                for fld in profile_fields:
+                    if fld in cand and cand[fld] is not None:
+                        if fld not in cand["profile"]:
+                            cand["profile"][fld] = cand[fld]
+                
+                # Normalize redrob_signals sub-block
                 if "redrob_signals" not in cand or not isinstance(cand["redrob_signals"], dict):
                     cand["redrob_signals"] = {}
+                
+                signal_fields = ["notice_period_days", "open_to_work_flag", "platform_activity_score"]
+                for fld in signal_fields:
+                    if fld in cand and cand[fld] is not None:
+                        if fld not in cand["redrob_signals"]:
+                            cand["redrob_signals"][fld] = cand[fld]
+                
+                # Normalize skills (handle both string list and list types)
+                if "skills" in cand:
+                    if isinstance(cand["skills"], str):
+                        cand["skills"] = [s.strip() for s in cand["skills"].split(",") if s.strip()]
+                    elif not isinstance(cand["skills"], list):
+                        cand["skills"] = []
+                else:
+                    cand["skills"] = []
+                
+                # Ensure career_history and education list exist
+                if "career_history" not in cand or not isinstance(cand["career_history"], list):
+                    cand["career_history"] = []
+                if "education" not in cand or not isinstance(cand["education"], list):
+                    cand["education"] = []
                     
                 valid_cands.append(cand)
             imported_cands = valid_cands
