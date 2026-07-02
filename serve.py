@@ -237,6 +237,36 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return
             
         body_bytes = self.rfile.read(content_length)
+        
+        # If it is a standard JSON file, convert it to JSONL under the hood
+        ext = os.path.splitext(filename.lower())[1]
+        if ext == '.json':
+            try:
+                content_str = body_bytes.decode('utf-8')
+                data = json.loads(content_str)
+                candidates = []
+                if isinstance(data, list):
+                    candidates = data
+                elif isinstance(data, dict):
+                    found = False
+                    for k, v in data.items():
+                        if isinstance(v, list) and k.lower() in ["candidate", "candidates"]:
+                            candidates = v
+                            found = True
+                            break
+                    if not found:
+                        candidates = [data]
+                
+                # Convert to JSONL string
+                jsonl_lines = []
+                for cand in candidates:
+                    jsonl_lines.append(json.dumps(cand))
+                jsonl_str = "\n".join(jsonl_lines) + "\n"
+                body_bytes = jsonl_str.encode('utf-8')
+                filename = filename + "l" # Convert .json to .jsonl
+            except Exception as e:
+                print(f"Failed to convert standard JSON to JSONL: {e}")
+                
         os.makedirs("tmp_imports", exist_ok=True)
         temp_file_path = os.path.join("tmp_imports", filename)
         

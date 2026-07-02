@@ -2179,6 +2179,20 @@
     }
 
     async function handleUploadProcess(file, replaceMode) {
+      // Validate file extension
+      const fileName = file.name || "";
+      const dotIndex = fileName.lastIndexOf('.');
+      const ext = dotIndex !== -1 ? fileName.slice(dotIndex).toLowerCase() : "";
+      if (ext !== '.json' && ext !== '.jsonl') {
+        if (importStatus) {
+          importStatus.style.display = 'block';
+          importStatus.style.color = '#ff6b6b';
+          importStatus.innerText = 'Error: Invalid file format type. Only JSON and JSONL files are allowed.';
+        }
+        alert("Error: Invalid file format type. Only JSON and JSONL files are allowed.");
+        return;
+      }
+
       if (importStatus) {
         importStatus.style.display = 'block';
         importStatus.style.color = 'var(--text-secondary)';
