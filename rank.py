@@ -21,12 +21,23 @@ SERVICES_COMPANIES = [
     "infosys limited", "wipro technologies"
 ]
 
-# Skills maps
-REQUIRED_VECTOR_DBS = ["milvus", "qdrant", "pinecone", "weaviate", "faiss", "elasticsearch", "opensearch"]
-REQUIRED_EMBEDDINGS = ["embeddings", "sentence transformers", "bge", "e5", "semantic search", "hybrid search", "bm25", "retrieval"]
-REQUIRED_EVAL = ["ndcg", "mrr", "map", "learning to rank", "xgboost", "ranking evaluation"]
-NICE_TO_HAVE_LLM = ["llm", "fine-tuning", "lora", "qlora", "peft", "transformers", "rag"]
-NICE_TO_HAVE_DIST = ["distributed systems", "inference optimization", "cuda", "tensorrt", "deepspeed", "vllm"]
+# Dynamic JD config (modified at runtime when ranking candidates)
+JD_CONFIG = {
+    "min_exp": 5.0,
+    "max_exp": 9.0,
+    "vector_dbs": ["milvus", "qdrant", "pinecone", "weaviate", "faiss", "elasticsearch", "opensearch"],
+    "embeddings": ["embeddings", "sentence transformers", "bge", "e5", "semantic search", "hybrid search", "bm25", "retrieval"],
+    "eval": ["ndcg", "mrr", "map", "learning to rank", "xgboost", "ranking evaluation"],
+    "llm": ["llm", "fine-tuning", "lora", "qlora", "peft", "transformers", "rag"],
+    "dist": ["distributed systems", "inference optimization", "cuda", "tensorrt", "deepspeed", "vllm"]
+}
+
+# Compatibility fallbacks
+REQUIRED_VECTOR_DBS = JD_CONFIG["vector_dbs"]
+REQUIRED_EMBEDDINGS = JD_CONFIG["embeddings"]
+REQUIRED_EVAL = JD_CONFIG["eval"]
+NICE_TO_HAVE_LLM = JD_CONFIG["llm"]
+NICE_TO_HAVE_DIST = JD_CONFIG["dist"]
 TRAP_CV_SPEECH_ROBO = ["computer vision", "image classification", "object detection", "speech recognition", "tts", "audio", "robotics"]
 
 # Target keywords for fixed vocabulary TF-IDF (bypasses expensive vocabulary building phase)
@@ -91,18 +102,24 @@ def is_honeypot(cand):
     return False, ""
 
 def compute_experience_score(years):
-    if years < 4.0:
+    min_exp = JD_CONFIG["min_exp"]
+    max_exp = JD_CONFIG["max_exp"]
+    if years < min_exp - 1:
         return 0.1 * years
-    elif 4.0 <= years < 5.0:
-        return 0.4 + 0.3 * (years - 4.0)
-    elif 5.0 <= years <= 9.0:
+    elif min_exp - 1 <= years < min_exp:
+        diff = years - (min_exp - 1)
+        return 0.4 + 0.6 * diff
+    elif min_exp <= years <= max_exp:
         return 1.0
-    elif 9.0 < years <= 12.0:
-        return 1.0 - 0.05 * (years - 9.0)
-    elif 12.0 < years <= 15.0:
-        return 0.85 - 0.05 * (years - 12.0)
+    elif max_exp < years <= max_exp + 3:
+        diff = years - max_exp
+        return 1.0 - 0.05 * diff
+    elif max_exp + 3 < years <= max_exp + 6:
+        diff = years - (max_exp + 3)
+        return 0.85 - 0.05 * diff
     else:
-        return max(0.4, 0.7 - 0.01 * (years - 15.0))
+        diff = years - (max_exp + 6)
+        return max(0.4, 0.7 - 0.01 * diff)
 
 def compute_role_score(career):
     ml_months = 0
@@ -176,9 +193,9 @@ def compute_skill_score(skills):
         elif isinstance(s, str) and s.strip():
             skills_map[s.strip().lower()] = {"name": s.strip(), "duration_months": 12}
             
-    has_vector_db = any(db in skills_map for db in REQUIRED_VECTOR_DBS)
-    has_embeddings = any(emb in skills_map for emb in REQUIRED_EMBEDDINGS)
-    has_eval = any(ev in skills_map for ev in REQUIRED_EVAL)
+    has_vector_db = any(db in skills_map for db in JD_CONFIG["vector_dbs"])
+    has_embeddings = any(emb in skills_map for emb in JD_CONFIG["embeddings"])
+    has_eval = any(ev in skills_map for ev in JD_CONFIG["eval"])
     has_python = "python" in skills_map
     
     base_points = 0
@@ -187,8 +204,8 @@ def compute_skill_score(skills):
     if has_eval: base_points += 5
     if has_python: base_points += 2
     
-    has_llm = any(llm in skills_map for llm in NICE_TO_HAVE_LLM)
-    has_dist = any(dist in skills_map for dist in NICE_TO_HAVE_DIST)
+    has_llm = any(llm in skills_map for llm in JD_CONFIG["llm"])
+    has_dist = any(dist in skills_map for dist in JD_CONFIG["dist"])
     if has_llm: base_points += 2
     if has_dist: base_points += 1
     
@@ -202,9 +219,9 @@ def compute_skill_score(skills):
         dur = skill.get("duration_months", 0)
         if dur is None: dur = 0
         
-        is_relevant = (name in REQUIRED_VECTOR_DBS or name in REQUIRED_EMBEDDINGS or 
-                       name in REQUIRED_EVAL or name == "python" or 
-                       name in NICE_TO_HAVE_LLM or name in NICE_TO_HAVE_DIST)
+        is_relevant = (name in JD_CONFIG["vector_dbs"] or name in JD_CONFIG["embeddings"] or 
+                       name in JD_CONFIG["eval"] or name == "python" or 
+                       name in JD_CONFIG["llm"] or name in JD_CONFIG["dist"])
                        
         if is_relevant:
             bonus += prof_val + min(2.0, ends * 0.1) + min(2.0, (dur / 12.0) * 0.2)
@@ -324,16 +341,16 @@ def generate_reasoning(cand, final_score, stats):
     skills_map = {s.get("name", "").lower(): s for s in skills}
     matched_skills = []
     
-    vector_dbs = [s.get("name") for s in skills if s.get("name", "").lower() in REQUIRED_VECTOR_DBS]
+    vector_dbs = [s.get("name") for s in skills if s.get("name", "").lower() in JD_CONFIG["vector_dbs"]]
     if vector_dbs: matched_skills.append(vector_dbs[0])
     
-    embs = [s.get("name") for s in skills if s.get("name", "").lower() in REQUIRED_EMBEDDINGS]
+    embs = [s.get("name") for s in skills if s.get("name", "").lower() in JD_CONFIG["embeddings"]]
     if embs: matched_skills.append(embs[0])
         
-    evs = [s.get("name") for s in skills if s.get("name", "").lower() in REQUIRED_EVAL]
+    evs = [s.get("name") for s in skills if s.get("name", "").lower() in JD_CONFIG["eval"]]
     if evs: matched_skills.append(evs[0])
         
-    llms = [s.get("name") for s in skills if s.get("name", "").lower() in NICE_TO_HAVE_LLM]
+    llms = [s.get("name") for s in skills if s.get("name", "").lower() in JD_CONFIG["llm"]]
     if llms: matched_skills.append(llms[0])
         
     skills_str = ", ".join(matched_skills[:3])
@@ -509,7 +526,9 @@ def parse_pdf_candidate(file_path):
         
     # 4. Skills extraction
     skills = []
-    all_skills_to_check = REQUIRED_VECTOR_DBS + REQUIRED_EMBEDDINGS + REQUIRED_EVAL + NICE_TO_HAVE_LLM + NICE_TO_HAVE_DIST + ["python"]
+    all_skills_to_check = (JD_CONFIG["vector_dbs"] + JD_CONFIG["embeddings"] + 
+                           JD_CONFIG["eval"] + JD_CONFIG["llm"] + 
+                           JD_CONFIG["dist"] + ["python"])
     for sk in all_skills_to_check:
         if re.search(r'\b' + re.escape(sk) + r'\b', text, re.IGNORECASE):
             skills.append({
@@ -805,10 +824,40 @@ def load_candidates_from_path(candidates_path):
     else:
         return load_candidates_from_file(candidates_path)
 
-def rank_candidates(candidates, top_n=-1):
+def rank_candidates(candidates, top_n=-1, jd_text=None):
     total_candidates = len(candidates)
     if total_candidates == 0:
         return []
+        
+    # Dynamically extract parameters from custom job description
+    if jd_text:
+        import re
+        # Parse experience range, e.g. "5–9 years" or "3 to 6 yrs" or "6-8 years"
+        match = re.search(r'(\d+)\s*[-–—to]+\s*(\d+)\s*(?:years|yrs|year|yr)', jd_text, re.IGNORECASE)
+        if match:
+            JD_CONFIG["min_exp"] = float(match.group(1))
+            JD_CONFIG["max_exp"] = float(match.group(2))
+            print(f"Parsed dynamic experience range: {JD_CONFIG['min_exp']} - {JD_CONFIG['max_exp']} years")
+            
+        # Parse skills dynamically based on mention in the JD text
+        jd_lower = jd_text.lower()
+        all_vector_dbs = ["milvus", "qdrant", "pinecone", "weaviate", "faiss", "elasticsearch", "opensearch", "chroma", "redis"]
+        all_embeddings = ["embeddings", "sentence transformers", "bge", "e5", "semantic search", "hybrid search", "bm25", "retrieval", "bert", "sbert"]
+        all_eval = ["ndcg", "mrr", "map", "learning to rank", "xgboost", "ranking evaluation", "eval", "ab testing", "benchmarks"]
+        all_llm = ["llm", "fine-tuning", "lora", "qlora", "peft", "transformers", "rag", "langchain", "llama", "gpt", "claude"]
+        all_dist = ["distributed systems", "inference optimization", "cuda", "tensorrt", "deepspeed", "vllm", "ray", "spark", "pyspark", "airflow"]
+        
+        req_vector_dbs = [db for db in all_vector_dbs if db in jd_lower]
+        req_embeddings = [emb for emb in all_embeddings if emb in jd_lower]
+        req_eval = [ev for ev in all_eval if ev in jd_lower]
+        req_llm = [llm for llm in all_llm if llm in jd_lower]
+        req_dist = [dist for dist in all_dist if dist in jd_lower]
+        
+        if req_vector_dbs: JD_CONFIG["vector_dbs"] = req_vector_dbs
+        if req_embeddings: JD_CONFIG["embeddings"] = req_embeddings
+        if req_eval: JD_CONFIG["eval"] = req_eval
+        if req_llm: JD_CONFIG["llm"] = req_llm
+        if req_dist: JD_CONFIG["dist"] = req_dist
         
     # Process sequentially to prevent massive multiprocessing IPC pickle serialization overhead
     batches_results = [process_candidate_batch(candidates)]
@@ -820,8 +869,8 @@ def rank_candidates(candidates, top_n=-1):
         scored_candidates.append(item)
         profile_texts.append(item["profile_text"])
             
-    # TF-IDF Matching
-    query_text = (
+    # TF-IDF Matching (uses full JD text if provided)
+    query_text = jd_text if jd_text else (
         "Senior AI Engineer Applied ML Machine Learning NLP embeddings based retrieval systems "
         "Pinecone Weaviate Qdrant Milvus OpenSearch Elasticsearch FAISS python evaluation "
         "NDCG MRR MAP RAG fine-tuning learning-to-rank distributed systems pipeline product "

@@ -190,6 +190,8 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         parsed_url = urllib.parse.urlparse(self.path)
         if parsed_url.path == '/api/candidates':
             self.handle_api_candidates(parsed_url)
+        elif parsed_url.path == '/api/jd':
+            self.handle_api_get_jd()
         else:
             super().do_GET()
 
@@ -199,6 +201,10 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_api_import(parsed_url)
         elif parsed_url.path == '/api/reset':
             self.handle_api_reset()
+        elif parsed_url.path == '/api/jd':
+            self.handle_api_post_jd()
+        elif parsed_url.path == '/api/parse-jd':
+            self.handle_api_parse_jd()
         else:
             self.send_error(404, "Endpoint not found")
             
@@ -413,6 +419,162 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
 
+    def handle_api_get_jd(self):
+        try:
+            text = get_current_jd_text()
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"text": text}).encode('utf-8'))
+        except Exception as e:
+            self.send_response(500)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+
+    def handle_api_post_jd(self):
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length == 0:
+                self.send_error(400, "Empty payload")
+                return
+            body_bytes = self.rfile.read(content_length)
+            
+            req_data = json.loads(body_bytes.decode('utf-8'))
+            jd_text = req_data.get("text", "").strip()
+            
+            if not jd_text:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Job description text cannot be empty."}).encode('utf-8'))
+                return
+                
+            with open(JD_FILE_PATH, "w", encoding="utf-8") as f:
+                f.write(jd_text)
+                
+            candidates = load_all_candidates_from_db()
+            ranked = rank.rank_candidates(candidates, top_n=-1, jd_text=jd_text)
+            save_candidates_to_db(ranked, replace=True)
+            
+            try:
+                with open("candidates.jsonl", "w", encoding="utf-8") as f_jsonl:
+                    for cand in candidates:
+                        cand.pop("score", None)
+                        cand.pop("rank", None)
+                        cand.pop("reasoning", None)
+                        f_jsonl.write(json.dumps(cand) + "\n")
+            except Exception as e:
+                print(f"Failed to synchronize candidates.jsonl during JD recalculation: {e}")
+            
+            result = query_candidates(page=1, limit=20)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(result).encode('utf-8'))
+        except Exception as e:
+            self.send_response(500)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+
+    def handle_api_parse_jd(self):
+        try:
+            parsed_url = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed_url.query)
+            filename = params.get('filename', ['jd_file'])[0]
+            
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length == 0:
+                self.send_error(400, "Empty payload")
+                return
+            body_bytes = self.rfile.read(content_length)
+            
+            ext = os.path.splitext(filename.lower())[1]
+            if ext == '.pdf':
+                import io
+                import pypdf
+                pdf_file = io.BytesIO(body_bytes)
+                reader = pypdf.PdfReader(pdf_file)
+                text_parts = []
+                for page in reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        text_parts.append(text)
+                extracted_text = "\n".join(text_parts)
+            elif ext == '.docx':
+                import io
+                import zipfile
+                import xml.etree.ElementTree as ET
+                docx_file = io.BytesIO(body_bytes)
+                with zipfile.ZipFile(docx_file) as docx:
+                    xml_content = docx.read('word/document.xml')
+                root = ET.fromstring(xml_content)
+                ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+                
+                text_parts = []
+                for elem in root.iter():
+                    if elem.tag.endswith('p'):
+                        p_text = []
+                        for t in elem.findall('.//w:t', ns):
+                            if t.text:
+                                p_text.append(t.text)
+                        if p_text:
+                            text_parts.append("".join(p_text))
+                    elif elem.tag.endswith('tr'):
+                        r_text = []
+                        for cell in elem.findall('.//w:tc', ns):
+                            cell_text = []
+                            for t in cell.findall('.//w:t', ns):
+                                if t.text:
+                                    cell_text.append(t.text)
+                            r_text.append("".join(cell_text))
+                        if r_text:
+                            text_parts.append(" | ".join(r_text))
+                extracted_text = '\n'.join(text_parts)
+            elif ext in ['.txt', '.md']:
+                extracted_text = body_bytes.decode('utf-8', errors='ignore')
+            else:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Unsupported file format. Please drop a PDF, Docx, or txt file."}).encode('utf-8'))
+                return
+                
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"text": extracted_text}).encode('utf-8'))
+        except Exception as e:
+            self.send_response(500)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": f"Failed to parse JD file: {str(e)}"}).encode('utf-8'))
+
+JD_FILE_PATH = "job_description.txt"
+
+def get_current_jd_text():
+    if os.path.exists(JD_FILE_PATH):
+        try:
+            with open(JD_FILE_PATH, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception as e:
+            print(f"Error reading local JD file: {e}")
+            
+    scratch_path = "/home/Vaibhav/.gemini/antigravity-cli/brain/a0e928ce-1cc8-4ef9-b584-7facb36f179f/scratch/job_description.txt"
+    if os.path.exists(scratch_path):
+        try:
+            with open(scratch_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                with open(JD_FILE_PATH, "w", encoding="utf-8") as f_out:
+                    f_out.write(content)
+                return content
+        except Exception as e:
+            print(f"Error reading fallback scratch JD: {e}")
+            
+    default_text = "Job Description: Senior AI Engineer\nExperience: 5-9 Years\nCore Tech: Python, Milvus, embeddings..."
+    return default_text
+
 def run_server():
     init_db()
     try:
@@ -423,6 +585,14 @@ def run_server():
         conn.close()
     except Exception as e:
         print(f"⚠️ Error clearing database on startup: {e}")
+        
+    try:
+        jd_text = get_current_jd_text()
+        rank.rank_candidates([], top_n=-1, jd_text=jd_text)
+        print("Successfully warmed up job description configuration.")
+    except Exception as e:
+        print(f"Failed to warm up JD config: {e}")
+        
     print(f"🚀 Application Engine live on http://localhost:{PORT}")
     http.server.HTTPServer(('', PORT), CustomHTTPRequestHandler).serve_forever()
 

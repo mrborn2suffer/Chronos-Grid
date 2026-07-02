@@ -836,6 +836,77 @@
     color: var(--text-primary);
   }
 
+  /* JD Edit CSS */
+  .jd-dropzone {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    background-color: var(--bg-card);
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+  }
+  .jd-dropzone:hover, .jd-dropzone.dragover {
+    border-color: var(--accent);
+    background-color: rgba(99, 102, 241, 0.05);
+  }
+  .jd-dropzone-icon {
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .jd-dropzone-text {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .jd-dropzone-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .jd-textarea-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .jd-textarea-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .jd-textarea {
+    width: 100%;
+    height: 250px;
+    background-color: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    color: var(--text-primary);
+    font-family: var(--font-mono, monospace);
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+  }
+  .jd-textarea:focus {
+    border-color: var(--accent);
+  }
+  .jd-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+    margin-top: 8px;
+  }
+
   /* Primary Action Button (Blue Accent) */
   .btn-primary {
     background-color: var(--accent);
@@ -1294,46 +1365,34 @@
   <div class="jd-modal" id="jd-modal">
     <div class="jd-modal-content">
       <div class="jd-modal-header">
-        <h3 class="jd-modal-title">Senior AI Engineer — Founding Team</h3>
+        <h3 class="jd-modal-title">Edit Job Description</h3>
         <button class="close-modal-btn" id="close-jd-btn">close [esc]</button>
       </div>
       
-      <div>
-        <p class="jd-body-text">
-          <strong>Company:</strong> Redrob AI (Series A talent intelligence platform)<br>
-          <strong>Location:</strong> Pune/Noida, India (Hybrid)<br>
-          <strong>Experience Required:</strong> 5–9 years (in Applied ML/AI product companies)
-        </p>
-
-        <div class="jd-section-header">Mandate & Focus</div>
-        <p class="jd-body-text">
-          Own the intelligence layer of Redrob's product (ranking, retrieval, and matching systems). Deployed embeddings-based systems and hybrid vector search databases to production.
-        </p>
-
-        <div class="jd-section-header">Core Tech Requirements</div>
-        <div class="jd-body-text">
-          <ul>
-            <li>Production embeddings retrieval (sentence-transformers, OpenAI embeddings, etc.)</li>
-            <li>Production vector databases or hybrid search infrastructure (Milvus, Qdrant, Pinecone, FAISS, Elasticsearch)</li>
-            <li>Strong Python skills</li>
-            <li>Hands-on experience designing evaluation frameworks (NDCG, MRR, MAP)</li>
-          </ul>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Hidden input for file selection -->
+        <input type="file" id="jd-file-input" accept=".pdf,.docx,.txt" style="display: none;">
+        
+        <!-- Sleek Drag & Drop zone -->
+        <div class="jd-dropzone" id="jd-dropzone">
+          <svg class="jd-dropzone-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <div class="jd-dropzone-text" id="jd-dropzone-text">Drag & drop a new JD (PDF or Word) here to auto-fill text</div>
+          <div class="jd-dropzone-sub">or click to browse from your computer</div>
         </div>
-
-        <div class="jd-section-header">Nice-to-Haves</div>
-        <p class="jd-body-text">
-          LLM fine-tuning (LoRA, QLoRA, PEFT), distributed systems, inference optimization, open-source.
-        </p>
-
-        <div class="jd-section-header">Strict Exclusions (Red Flags)</div>
-        <div class="jd-body-text">
-          <ul>
-            <li>Candidates whose entire career is spent in consulting/IT service companies (TCS, Infosys, Wipro, Accenture, Cognizant, etc.)</li>
-            <li>AI experience consisting only of recent LangChain tutorials.</li>
-            <li>CV, Speech, or Robotics focus without significant NLP/IR exposure.</li>
-            <li>Non-coding architects (has not written production code in last 18 months).</li>
-          </ul>
+        
+        <div class="jd-textarea-container">
+          <div class="jd-textarea-label">-- OR PASTE/EDIT RAW TEXT BELOW --</div>
+          <textarea class="jd-textarea" id="jd-text-area" placeholder="Paste or type the job description here..."></textarea>
         </div>
+      </div>
+      
+      <div class="jd-modal-footer">
+        <button class="jd-toggle-btn" id="cancel-jd-btn" style="border: 1px solid var(--border-color); background: transparent; color: var(--text-primary);">Cancel</button>
+        <button class="btn-primary" id="update-recalculate-jd-btn">Update & Recalculate</button>
       </div>
     </div>
   </div>
@@ -1915,11 +1974,152 @@
     if(closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
     if(sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
-    if(openJdBtn) openJdBtn.addEventListener('click', () => { if(jdModal) jdModal.classList.add('open'); });
+    // Fetch and populate Job Description
+    async function loadJdText() {
+      const textarea = document.getElementById('jd-text-area');
+      if (!textarea) return;
+      try {
+        const response = await fetch('/api/jd');
+        if (response.ok) {
+          const data = await response.json();
+          textarea.value = data.text || '';
+        }
+      } catch (err) {
+        console.error('Failed to load Job Description:', err);
+      }
+    }
+
+    if(openJdBtn) openJdBtn.addEventListener('click', () => { 
+      if(jdModal) {
+        jdModal.classList.add('open'); 
+        loadJdText();
+      }
+    });
     if(closeJdBtn) closeJdBtn.addEventListener('click', () => { if(jdModal) jdModal.classList.remove('open'); });
+    
+    const cancelJdBtn = document.getElementById('cancel-jd-btn');
+    if (cancelJdBtn) cancelJdBtn.addEventListener('click', () => {
+      if (jdModal) jdModal.classList.remove('open');
+    });
+
     if(jdModal) {
       jdModal.addEventListener('click', (e) => {
         if (e.target === jdModal) jdModal.classList.remove('open');
+      });
+    }
+
+    // Dropzone setup
+    const dropzone = document.getElementById('jd-dropzone');
+    const jdFileInput = document.getElementById('jd-file-input');
+    const jdDropzoneText = document.getElementById('jd-dropzone-text');
+    const jdTextArea = document.getElementById('jd-text-area');
+
+    if (dropzone && jdFileInput) {
+      dropzone.addEventListener('click', () => {
+        jdFileInput.click();
+      });
+
+      jdFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          handleJdFile(e.target.files[0]);
+        }
+      });
+
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+          handleJdFile(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    async function handleJdFile(file) {
+      if (!file) return;
+      
+      if (jdDropzoneText) {
+        jdDropzoneText.innerHTML = `<span style="color: var(--accent);">Parsing ${file.name}...</span>`;
+      }
+      
+      try {
+        const response = await fetch(`/api/parse-jd?filename=${encodeURIComponent(file.name)}`, {
+          method: 'POST',
+          body: file
+        });
+        
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Failed to parse file.');
+        }
+        
+        const data = await response.json();
+        if (jdTextArea) {
+          jdTextArea.value = data.text || '';
+        }
+        if (jdDropzoneText) {
+          jdDropzoneText.innerHTML = `<span style="color: var(--gauge-green);">Successfully parsed ${file.name}!</span>`;
+          setTimeout(() => {
+            jdDropzoneText.innerText = 'Drag & drop a new JD (PDF or Word) here to auto-fill text';
+          }, 3000);
+        }
+      } catch (err) {
+        alert(err.message);
+        if (jdDropzoneText) {
+          jdDropzoneText.innerText = 'Drag & drop a new JD (PDF or Word) here to auto-fill text';
+        }
+      }
+    }
+
+    // Update and Recalculate
+    const updateRecalculateBtn = document.getElementById('update-recalculate-jd-btn');
+    if (updateRecalculateBtn) {
+      updateRecalculateBtn.addEventListener('click', async () => {
+        if (!jdTextArea) return;
+        const text = jdTextArea.value.trim();
+        if (!text) {
+          alert('Job description text cannot be empty.');
+          return;
+        }
+
+        const processingOverlay = document.getElementById('processing-overlay');
+        const processingMessage = document.getElementById('processing-message');
+        
+        if (processingOverlay) {
+          if (processingMessage) processingMessage.innerText = 'Analyzing job description and recalculating candidate fits...';
+          processingOverlay.removeAttribute('hidden');
+        }
+
+        try {
+          const response = await fetch('/api/jd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Failed to update job description.');
+          }
+
+          currentPage = 1;
+          await loadCandidates(false);
+          
+          if (jdModal) jdModal.classList.remove('open');
+          
+        } catch (err) {
+          alert(err.message);
+        } finally {
+          if (processingOverlay) processingOverlay.setAttribute('hidden', 'true');
+        }
       });
     }
 
