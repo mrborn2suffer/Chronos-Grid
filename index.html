@@ -1532,7 +1532,7 @@
         if (rightPane) {
           rightPane.innerHTML = `
             <div class="empty-state" style="padding: 60px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-              <div class="empty-state-upload" id="empty-state-upload" style="border: 2px dashed var(--border-color); padding: 48px 32px; border-radius: 12px; background-color: var(--bg-pane); text-align: center; width: 100%; max-width: 440px; cursor: pointer; transition: all 0.2s ease; box-shadow: var(--shadow-sm);">
+              <label class="empty-state-upload" id="empty-state-upload" style="border: 2px dashed var(--border-color); padding: 48px 32px; border-radius: 12px; background-color: var(--bg-pane); text-align: center; width: 100%; max-width: 440px; cursor: pointer; display: block; transition: all 0.2s ease; box-shadow: var(--shadow-sm);">
                 <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" style="margin-bottom: 16px; opacity: 0.85;">
                   <path d="M12 16V11M12 11L9.5 13.5M12 11L14.5 13.5" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M20 16.58C21.17 15.65 22 14.19 22 12.5C22 9.46 19.54 7 16.5 7C16.29 7 16.08 7.01 15.88 7.03C15.02 4.07 12.26 2 9 2C4.58 2 1 5.58 1 10C1 12.58 2.22 14.88 4.12 16.33" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1542,8 +1542,8 @@
                   Drag & drop your candidate list JSON file here,<br>or click to select file.
                 </p>
                 <input type="file" id="center-file-input" style="display: none;" accept=".json,.jsonl">
-                <button class="btn-primary" style="padding: 8px 20px; font-size: 12px;">Select File</button>
-              </div>
+                <button class="btn-primary" style="padding: 8px 20px; font-size: 12px; pointer-events: none;">Select File</button>
+              </label>
             </div>
           `;
           setupDragAndDrop();
@@ -2150,10 +2150,6 @@
       const centerInput = document.getElementById('center-file-input');
       
       if (!dropZone) return;
-      
-      dropZone.addEventListener('click', () => {
-        if (centerInput) centerInput.click();
-      });
       
       if (centerInput) {
         centerInput.addEventListener('change', (e) => {
