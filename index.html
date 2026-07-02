@@ -1742,32 +1742,52 @@
       }).join('');
 
       const skillsList = cand.skills.map(s => {
-        const profClass = `prof-${s.proficiency.toLowerCase()}`;
+        const prof = s.proficiency || "Intermediate";
+        const profClass = `prof-${prof.toLowerCase()}`;
+        const endorsements = s.endorsements !== undefined ? s.endorsements : 0;
+        const duration = s.duration_months !== undefined ? s.duration_months : 12;
         return `
           <div class="skill-card">
             <div class="skill-header">
               <div class="skill-name">${s.name}</div>
-              <span class="skill-proficiency ${profClass}">${s.proficiency}</span>
+              <span class="skill-proficiency ${profClass}">${prof}</span>
             </div>
-            <div class="skill-meta">${s.duration_months} months • ${s.endorsements} endorsements</div>
+            <div class="skill-meta">${duration} months • ${endorsements} endorsements</div>
           </div>
         `;
       }).join('');
 
       const educationList = cand.education.map(edu => {
+        const inst = edu.institution || 'Unknown';
+        const deg = edu.degree || 'Degree';
+        const field = edu.field_of_study || 'N/A';
+        const startY = edu.start_year || 'N/A';
+        const endY = edu.end_year || 'N/A';
+        const t = edu.tier || '';
         return `
           <div class="education-row">
             <div>
-              <div class="edu-school">${edu.institution}</div>
-              <div class="edu-degree">${edu.degree} in ${edu.field_of_study}</div>
+              <div class="edu-school">${inst}</div>
+              <div class="edu-degree">${deg} in ${field}</div>
             </div>
             <div class="edu-meta">
-              <div class="edu-years">${edu.start_year} - ${edu.end_year}</div>
-              <div class="edu-tier">${edu.tier}</div>
+              <div class="edu-years">${startY} - ${endY}</div>
+              <div class="edu-tier">${t}</div>
             </div>
           </div>
         `;
       }).join('');
+
+      // Safe signal extraction
+      const profileCompleteness = cand.redrob_signals.profile_completeness_score !== undefined ? cand.redrob_signals.profile_completeness_score : 100;
+      const connectionCount = cand.redrob_signals.connection_count !== undefined ? cand.redrob_signals.connection_count : 150;
+      const willingToRelocate = cand.redrob_signals.willing_to_relocate !== undefined ? cand.redrob_signals.willing_to_relocate : true;
+      const preferredWorkMode = cand.redrob_signals.preferred_work_mode || "Hybrid";
+      const gitHubScore = cand.redrob_signals.github_activity_score !== undefined ? cand.redrob_signals.github_activity_score : -1;
+      const recruiterResponseRate = cand.redrob_signals.recruiter_response_rate !== undefined ? cand.redrob_signals.recruiter_response_rate : 1.0;
+      const avgResponseTimeHours = cand.redrob_signals.avg_response_time_hours !== undefined ? cand.redrob_signals.avg_response_time_hours : 2.0;
+      const interviewCompletionRate = cand.redrob_signals.interview_completion_rate !== undefined ? cand.redrob_signals.interview_completion_rate : 1.0;
+      const salaryRange = cand.redrob_signals.expected_salary_range_inr_lpa || { min: 10, max: 25 };
 
       rightPane.innerHTML = `
         <div data-candidate-id="${cand.candidate_id}">
@@ -1778,9 +1798,9 @@
               
               <div class="profile-meta-grid">
                 <div class="meta-badge">Experience <span class="meta-val">${cand.profile.years_of_experience.toFixed(1)} Yrs</span></div>
-                <div class="meta-badge">Location <span class="meta-val">${cand.profile.location}, ${cand.profile.country}</span></div>
-                <div class="meta-badge">Industry <span class="meta-val">${cand.profile.current_industry}</span></div>
-                <div class="meta-badge">Notice Period <span class="meta-val">${cand.redrob_signals.notice_period_days} Days</span></div>
+                <div class="meta-badge">Location <span class="meta-val">${cand.profile.location || 'Unknown'}, ${cand.profile.country || 'N/A'}</span></div>
+                <div class="meta-badge">Industry <span class="meta-val">${cand.profile.current_industry || 'N/A'}</span></div>
+                <div class="meta-badge">Notice Period <span class="meta-val">${cand.redrob_signals.notice_period_days || 30} Days</span></div>
               </div>
             </div>
 
@@ -1806,13 +1826,13 @@
 
         <div>
           <h3 class="section-title">Summary</h3>
-          <p class="summary-text">${cand.profile.summary}</p>
+          <p class="summary-text">${cand.profile.summary || 'No summary declared.'}</p>
         </div>
 
         <div>
           <h3 class="section-title">Career History</h3>
           <div class="timeline">
-            ${careerTimeline}
+            ${careerTimeline || '<div style="padding: 10px; color: var(--text-secondary); font-size: 11px;">No declared career history.</div>'}
           </div>
         </div>
 
@@ -1820,13 +1840,13 @@
           <div>
             <h3 class="section-title">Verified Core Skills</h3>
             <div class="skills-grid">
-              ${skillsList}
+              ${skillsList || '<div style="padding: 10px; color: var(--text-secondary); font-size: 11px;">No core skills declared.</div>'}
             </div>
           </div>
           <div>
             <h3 class="section-title">Education</h3>
             <div>
-              ${educationList}
+              ${educationList || '<div style="padding: 10px; color: var(--text-secondary); font-size: 11px;">No declared education history.</div>'}
             </div>
           </div>
         </div>
@@ -1836,20 +1856,20 @@
           <div class="signals-grid">
             <div class="signal-card-box">
               <table class="signal-table">
-                <tr><td class="signal-label">Profile Completeness</td><td class="signal-val">${cand.redrob_signals.profile_completeness_score}%</td></tr>
+                <tr><td class="signal-label">Profile Completeness</td><td class="signal-val">${profileCompleteness}%</td></tr>
                 <tr><td class="signal-label">Open to Work</td><td class="signal-val">${cand.redrob_signals.open_to_work_flag ? 'Yes' : 'No'}</td></tr>
-                <tr><td class="signal-label">Connection Count</td><td class="signal-val">${cand.redrob_signals.connection_count}</td></tr>
-                <tr><td class="signal-label">Willing to Relocate</td><td class="signal-val">${cand.redrob_signals.willing_to_relocate ? 'Yes' : 'No'}</td></tr>
-                <tr><td class="signal-label">Preferred Mode</td><td class="signal-val">${cand.redrob_signals.preferred_work_mode}</td></tr>
+                <tr><td class="signal-label">Connection Count</td><td class="signal-val">${connectionCount}</td></tr>
+                <tr><td class="signal-label">Willing to Relocate</td><td class="signal-val">${willingToRelocate ? 'Yes' : 'No'}</td></tr>
+                <tr><td class="signal-label">Preferred Mode</td><td class="signal-val">${preferredWorkMode}</td></tr>
               </table>
             </div>
             <div class="signal-card-box">
               <table class="signal-table">
-                <tr><td class="signal-label">GitHub Activity</td><td class="signal-val">${cand.redrob_signals.github_activity_score !== -1 ? cand.redrob_signals.github_activity_score + '/100' : 'Not Linked'}</td></tr>
-                <tr><td class="signal-label">Recruiter Response Rate</td><td class="signal-val">${(cand.redrob_signals.recruiter_response_rate * 100).toFixed(0)}%</td></tr>
-                <tr><td class="signal-label">Average Response Time</td><td class="signal-val">${cand.redrob_signals.avg_response_time_hours.toFixed(1)} hrs</td></tr>
-                <tr><td class="signal-label">Interview Attendance</td><td class="signal-val">${(cand.redrob_signals.interview_completion_rate * 100).toFixed(0)}%</td></tr>
-                <tr><td class="signal-label">Salary Expectation</td><td class="signal-val">${cand.redrob_signals.expected_salary_range_inr_lpa.min} - ${cand.redrob_signals.expected_salary_range_inr_lpa.max} LPA</td></tr>
+                <tr><td class="signal-label">GitHub Activity</td><td class="signal-val">${gitHubScore !== -1 ? gitHubScore + '/100' : 'Not Linked'}</td></tr>
+                <tr><td class="signal-label">Recruiter Response Rate</td><td class="signal-val">${(recruiterResponseRate * 100).toFixed(0)}%</td></tr>
+                <tr><td class="signal-label">Average Response Time</td><td class="signal-val">${avgResponseTimeHours.toFixed(1)} hrs</td></tr>
+                <tr><td class="signal-label">Interview Attendance</td><td class="signal-val">${(interviewCompletionRate * 100).toFixed(0)}%</td></tr>
+                <tr><td class="signal-label">Salary Expectation</td><td class="signal-val">${salaryRange.min} - ${salaryRange.max} LPA</td></tr>
               </table>
             </div>
           </div>
