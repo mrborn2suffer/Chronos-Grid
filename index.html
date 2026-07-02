@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Redrob AI Matching Engine Dashboard</title>
+<title>Chronos Grid — AI Candidate Matching Engine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1282,10 +1282,10 @@
         <line x1="6.8" y1="16.2" x2="10.2" y2="13.8" />
         <line x1="17.2" y1="16.2" x2="13.8" y2="13.8" />
       </svg>
-      <span style="font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.5px;">Redrob</span>
+      <span style="font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.5px;">Chronos Grid</span>
     </div>
     <div style="display: flex; gap: 12px; align-items: center; position: relative;">
-      <span class="header-right-app-name" style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-right: 8px; border-right: 1px solid var(--border-color); padding-right: 14px; letter-spacing: 0.5px; display: inline-block;">Redrob Candidate Engine</span>
+      <span class="header-right-app-name" style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-right: 8px; border-right: 1px solid var(--border-color); padding-right: 14px; letter-spacing: 0.5px; display: inline-block;">Chronos Candidate Engine</span>
       <button class="jd-toggle-btn" id="open-jd-btn">View/Edit Job Description</button>
       <button class="btn-primary" id="export-pdf-btn">Export Shortlist</button>
     </div>
@@ -2241,7 +2241,7 @@
         const url = `/api/export-xlsx?min_score=${threshold}&limit=${limitValue}`;
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'redrob_shortlist.xlsx';
+        a.download = 'chronos_shortlist.xlsx';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -2332,7 +2332,7 @@
           <!DOCTYPE html>
           <html>
           <head>
-            <title>Redrob Candidate Shortlist - Score \u2265 ${threshold}%</title>
+            <title>Chronos Grid Candidate Shortlist - Score \u2265 ${threshold}%</title>
             <style>
               @media print {
                 body { background-color: #fff; color: #000; margin: 0; padding: 20px; font-family: 'Inter', sans-serif; }
@@ -2346,7 +2346,7 @@
           <body onload="window.print();">
             <div style="border-bottom: 3px double #1e293b; padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
               <div>
-                <h1 style="font-size: 26px; font-weight: bold; margin: 0 0 4px 0; color: #000; letter-spacing: 0.5px;">Redrob Candidate Shortlist</h1>
+                <h1 style="font-size: 26px; font-weight: bold; margin: 0 0 4px 0; color: #000; letter-spacing: 0.5px;">Chronos Grid Candidate Shortlist</h1>
                 <p style="font-size: 11px; color: #64748b; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Intelligent Matching Summary Report</p>
               </div>
               <div style="text-align: right; font-family: monospace; font-size: 11px; color: #64748b;">
