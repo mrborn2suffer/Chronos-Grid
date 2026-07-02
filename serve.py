@@ -684,7 +684,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            self.send_header('Content-Disposition', 'attachment; filename=chronos_shortlist.xlsx')
+            self.send_header('Content-Disposition', 'attachment; filename=synapse_shortlist.xlsx')
             self.send_header('Content-Length', str(len(xlsx_bytes)))
             self.end_headers()
             self.wfile.write(xlsx_bytes)
