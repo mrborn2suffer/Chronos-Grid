@@ -575,11 +575,21 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "rank": r["rank"],
                     "score": r["score"],
                     "reasoning": r["reasoning"],
-                    "profile": json.loads(r["profile_json"]),
-                    "skills": json.loads(r["skills_json"]),
-                    "education": json.loads(r["education_json"]),
-                    "redrob_signals": json.loads(r["signals_json"]),
-                    "career_history": json.loads(r["career_json"])
+                    "profile": {
+                        "anonymized_name": r["anonymized_name"],
+                        "current_title": r["current_title"],
+                        "current_company": r["current_company"],
+                        "location": r["location"],
+                        "country": r["country"],
+                        "years_of_experience": r["years_of_experience"],
+                        "summary": r["summary"],
+                        "headline": r["headline"],
+                        "current_industry": r["current_industry"]
+                    },
+                    "skills": json.loads(r["skills_json"]) if r["skills_json"] else [],
+                    "education": json.loads(r["education_json"]) if r["education_json"] else [],
+                    "redrob_signals": json.loads(r["redrob_signals_json"]) if r["redrob_signals_json"] else {},
+                    "career_history": json.loads(r["career_history_json"]) if r["career_history_json"] else []
                 }
                 candidates.append(c)
 
