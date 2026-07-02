@@ -695,24 +695,15 @@ def rank_candidates(candidates, top_n=-1):
     if total_candidates == 0:
         return []
         
-    # Check if we should process sequentially to avoid overhead on small lists
-    if total_candidates < 20:
-        batches_results = [process_candidate_batch(candidates)]
-    else:
-        n_cores = mp.cpu_count()
-        chunk_size = max(1, total_candidates // n_cores + 1)
-        batches = [candidates[i:i + chunk_size] for i in range(0, total_candidates, chunk_size)]
-        
-        with mp.Pool(processes=n_cores) as pool:
-            batches_results = pool.map(process_candidate_batch, batches)
+    # Process sequentially to prevent massive multiprocessing IPC pickle serialization overhead
+    batches_results = [process_candidate_batch(candidates)]
         
     # Flatten results
     scored_candidates = []
     profile_texts = []
-    for batch_res in batches_results:
-        for item in batch_res:
-            scored_candidates.append(item)
-            profile_texts.append(item["profile_text"])
+    for item in batches_results[0]:
+        scored_candidates.append(item)
+        profile_texts.append(item["profile_text"])
             
     # TF-IDF Matching
     query_text = (

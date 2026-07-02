@@ -22,7 +22,7 @@
     --text-secondary: #64748b;/* Slate 500 */
     --text-muted: #94a3b8;    /* Slate 400 */
     
-    --accent: #2563eb;        /* Professional Royal Blue */
+    --accent: #2563eb;         /* Professional Royal Blue */
     --accent-hover: #1d4ed8;
     
     /* Semantic Colors */
@@ -573,11 +573,6 @@
   .prof-intermediate { background-color: #fef9c3; color: #854d0e; }
   .prof-beginner { background-color: #f1f5f9; color: #475569; }
 
-  .skill-meta {
-    font-size: 11px;
-    color: var(--text-secondary);
-  }
-
   /* Experience Timeline */
   .timeline {
     display: flex;
@@ -873,12 +868,10 @@
   }
 
   @media (max-width: 900px) {
-    /* Reveal Mobile Header UI */
     .mobile-menu-btn { display: flex; }
     .header-title-block p { display: none; }
     header { padding: 0 20px; }
     
-    /* Convert Left Pane into Slide-out Sidebar */
     .sidebar-overlay { display: block; }
     
     .left-pane { 
@@ -897,7 +890,6 @@
     .left-pane.open { transform: translateX(0); }
     .mobile-close-container { display: flex; }
     
-    /* Expand Right Pane */
     .right-pane { width: 100%; padding: 30px 20px; }
     .signals-grid { grid-template-columns: 1fr; }
   }
@@ -910,13 +902,13 @@
     .score-gauge-container { margin-top: 10px; align-self: center; }
   }
 
-  /* Corporate Standard Scrollbar */
+  /* Corporate Scrollbar */
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: var(--bg-main); }
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-  /* Loading Spinner and Interactive Components */
+  /* Loading Spinner Components */
   .spinner-monotonic {
     border: 2px solid var(--border-color);
     border-top: 2px solid var(--text-primary);
@@ -929,6 +921,106 @@
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+  }
+
+  .processing-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.66);
+    backdrop-filter: blur(4px);
+    padding: 24px;
+  }
+
+  .processing-card {
+    width: min(92vw, 360px);
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 16px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.2);
+    padding: 28px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .processing-card p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .loader {
+    --s: 25px;
+    --g: 5px;
+    --tile: #e2e8f0;
+    --highlight: #93c5fd;
+    --shadow: #cbd5e1;
+    --border-color: #e2e8f0;
+    --border-focus: #93c5fd;
+    width: calc(3 * (1.353 * var(--s) + var(--g)));
+    aspect-ratio: 3;
+    display: grid;
+    justify-items: end;
+    overflow: hidden;
+    --_m: linear-gradient(
+      90deg,
+      transparent,
+      #000 15px calc(100% - 15px),
+      transparent
+    );
+    -webkit-mask: var(--_m);
+    mask: var(--_m);
+  }
+
+  .loader::before {
+    content: "";
+    width: 200%;
+    background:
+      linear-gradient(90deg, var(--tile) 50%, transparent 0),
+      conic-gradient(
+        from -90deg at var(--s) calc(0.353 * var(--s)),
+        var(--highlight) 135deg,
+        var(--shadow) 0 270deg,
+        var(--border-color) 0
+      );
+    background-blend-mode: soft-light;
+    box-shadow:
+      inset 0 0 0 1px var(--border-color),
+      inset 0 1px 0 rgba(255,255,255,.45),
+      0 1px 2px rgba(15,23,42,.06);
+    --_m:
+      linear-gradient(
+        to bottom right,
+        transparent calc(0.25 * var(--s)),
+        #000 0 calc(100% - calc(0.25 * var(--s)) - 1.414 * var(--g)),
+        transparent 0
+      ),
+      conic-gradient(
+        from -90deg at right var(--g) bottom var(--g),
+        #000 90deg,
+        transparent 0
+      );
+    -webkit-mask: var(--_m);
+    mask: var(--_m);
+    background-size:
+      calc(100% / 3) 100%,
+      calc(100% / 6) 100%;
+    -webkit-mask-size: calc(100% / 6) 100%;
+    mask-size: calc(100% / 6) 100%;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+    animation: l10 1s linear infinite;
+  }
+
+  @keyframes l10 {
+    to { transform: translate(calc(100% / 3)); }
   }
   
   .filter-select {
@@ -947,9 +1039,7 @@
     color: var(--text-primary);
     border-color: var(--text-secondary);
   }
-  .filter-select:focus {
-    border-color: var(--accent);
-  }
+  .filter-select:focus { border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -963,7 +1053,6 @@
       </div>
     </div>
     <div style="display: flex; gap: 12px; align-items: center; position: relative;">
-      <!-- PDF Export Option -->
       <div style="position: relative; display: inline-block;">
         <button class="jd-toggle-btn" id="export-pdf-btn" style="display: flex; align-items: center; gap: 6px;">
           Export Shortlist
@@ -987,9 +1076,15 @@
   <div class="main-layout">
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <!-- Left panel (Sidebar on mobile) -->
+    <div class="processing-overlay" id="processing-overlay" hidden>
+      <div class="processing-card">
+        <div class="loader" aria-hidden="true"></div>
+        <h3 style="font-size: 15px; font-weight: 700; color: var(--text-primary);">Processing your file</h3>
+        <p id="processing-message">Uploading and ranking candidates...</p>
+      </div>
+    </div>
+
     <div class="left-pane" id="left-pane">
-      <!-- Import candidates block -->
       <div class="import-container" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-pane);">
         <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600;">Import Candidates</div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -1001,7 +1096,7 @@
             <label style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
               <input type="checkbox" id="replace-checkbox" style="accent-color: var(--text-primary);"> Replace current list
             </label>
-            <button id="reset-db-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 4px 8px; font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.borderColor='var(--text-secondary)'; this.style.color='#fff';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.color='var(--text-secondary)';">Reset</button>
+            <button id="reset-db-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 4px 8px; font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.borderColor='var(--text-secondary)';" onmouseout="this.style.borderColor='var(--border-color)';">Reset</button>
           </div>
           <div id="import-status" style="font-size: 11px; color: var(--text-muted); display: none; margin-top: 4px; line-height: 1.4;"></div>
         </div>
@@ -1035,16 +1130,12 @@
       </div>
       
       <div class="candidate-list" id="candidate-list">
-        <!-- Rendered dynamically -->
-      </div>
+        </div>
 
-      <!-- Pagination footer control -->
       <div class="pagination-container" id="pagination-container">
-        <!-- Rendered dynamically -->
-      </div>
+        </div>
     </div>
 
-    <!-- Right panel: candidate detail viewer -->
     <div class="right-pane" id="right-pane">
       <div class="empty-state">
         <h2>Select a candidate</h2>
@@ -1053,7 +1144,6 @@
     </div>
   </div>
 
-  <!-- Job Description Modal -->
   <div class="jd-modal" id="jd-modal">
     <div class="jd-modal-content">
       <div class="jd-modal-header">
@@ -1094,7 +1184,7 @@
             <li>Candidates whose entire career is spent in consulting/IT service companies (TCS, Infosys, Wipro, Accenture, Cognizant, etc.)</li>
             <li>AI experience consisting only of recent LangChain tutorials.</li>
             <li>CV, Speech, or Robotics focus without significant NLP/IR exposure.</li>
-        <li>Non-coding architects (has not written production code in last 18 months).</li>
+            <li>Non-coding architects (has not written production code in last 18 months).</li>
           </ul>
         </div>
       </div>
@@ -1133,28 +1223,21 @@
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const closeSidebarBtn = document.getElementById('close-sidebar-btn');
 
-    // Helper to toggle active UI states for search, filters, exports, etc.
     function updateUIState() {
       const isEmpty = (totalCandidatesCount === 0);
 
-      // Disable/Enable Search Input
-      searchInput.disabled = isEmpty;
-      searchInput.style.opacity = isEmpty ? '0.35' : '1';
-      searchInput.style.pointerEvents = isEmpty ? 'none' : 'auto';
-      searchInput.placeholder = isEmpty ? 'No dataset loaded' : 'Search by name, title, skill...';
+      if (searchInput) {
+        searchInput.disabled = isEmpty;
+        searchInput.style.opacity = isEmpty ? '0.35' : '1';
+        searchInput.style.pointerEvents = isEmpty ? 'none' : 'auto';
+        searchInput.placeholder = isEmpty ? 'No dataset loaded' : 'Search by name, title, skill...';
+      }
 
-      // Disable/Enable Filter buttons
       filterBtns.forEach(btn => {
-        if (isEmpty) {
-          btn.style.opacity = '0.35';
-          btn.style.pointerEvents = 'none';
-        } else {
-          btn.style.opacity = '1';
-          btn.style.pointerEvents = 'auto';
-        }
+        btn.style.opacity = isEmpty ? '0.35' : '1';
+        btn.style.pointerEvents = isEmpty ? 'none' : 'auto';
       });
 
-      // Disable/Enable Score Filter Select
       const scoreFilterSelect = document.getElementById('score-filter-select');
       if (scoreFilterSelect) {
         scoreFilterSelect.disabled = isEmpty;
@@ -1162,31 +1245,18 @@
         scoreFilterSelect.style.pointerEvents = isEmpty ? 'none' : 'auto';
       }
 
-      // Disable/Enable Export PDF button
       const exportPdfBtn = document.getElementById('export-pdf-btn');
       if (exportPdfBtn) {
-        if (isEmpty) {
-          exportPdfBtn.style.opacity = '0.35';
-          exportPdfBtn.style.pointerEvents = 'none';
-        } else {
-          exportPdfBtn.style.opacity = '1';
-          exportPdfBtn.style.pointerEvents = 'auto';
-        }
+        exportPdfBtn.style.opacity = isEmpty ? '0.35' : '1';
+        exportPdfBtn.style.pointerEvents = isEmpty ? 'none' : 'auto';
       }
 
-      // Disable/Enable View Job Description button
-      const openJdBtn = document.getElementById('open-jd-btn');
       if (openJdBtn) {
-        if (isEmpty) {
-          openJdBtn.style.opacity = '0.35';
-          openJdBtn.style.pointerEvents = 'none';
-        } else {
-          openJdBtn.style.opacity = '1';
-          openJdBtn.style.pointerEvents = 'auto';
-        }
+        openJdBtn.style.opacity = isEmpty ? '0.35' : '1';
+        openJdBtn.style.pointerEvents = isEmpty ? 'none' : 'auto';
       }
 
-      if (isEmpty) {
+      if (isEmpty && candidateList) {
         candidateList.innerHTML = `
           <div class="empty-state-container" style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 12px; opacity: 0.5;">
@@ -1194,33 +1264,36 @@
               <path d="M12 8V12" />
               <path d="M12 16H12.01" />
             </svg>
-            <div style="font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 6px;">No Dataset Loaded</div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">No Dataset Loaded</div>
             <p style="font-size: 11px; line-height: 1.4; color: var(--text-muted); max-width: 180px; margin: 0 auto;">
               Drop or select a candidate list file (JSON, CSV, PDF, XML, YAML) in the sidebar to begin matching.
             </p>
           </div>
         `;
-        rightPane.innerHTML = `
-          <div class="empty-state" style="padding: 120px 20px; text-align: center;">
-            <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 20px; color: var(--text-primary); margin-bottom: 10px;">Classification Inactive</h2>
-            <p style="color: var(--text-secondary); max-width: 320px; margin: 0 auto; font-size: 13px; line-height: 1.6;">
-              Please import a fresh dataset of candidates from the sidebar to activate ranking and pedigree analysis.
-            </p>
-          </div>
-        `;
-        paginationContainer.innerHTML = '';
+        if (rightPane) {
+          rightPane.innerHTML = `
+            <div class="empty-state" style="padding: 120px 20px; text-align: center;">
+              <h2 style="font-size: 20px; color: var(--text-primary); margin-bottom: 10px;">Classification Inactive</h2>
+              <p style="color: var(--text-secondary); max-width: 320px; margin: 0 auto; font-size: 13px; line-height: 1.6;">
+                Please import a fresh dataset of candidates from the sidebar to activate ranking and pedigree analysis.
+              </p>
+            </div>
+          `;
+        }
+        if (paginationContainer) paginationContainer.innerHTML = '';
       }
     }
 
-    // Fetch Candidates Data from SQLite database API
-    async function loadCandidates() {
+    async function loadCandidates(isActionBased = false) {
       try {
-        candidateList.innerHTML = `
-          <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
-            <div class="spinner-monotonic"></div>
-            <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: #fff;">Querying database...</div>
-          </div>
-        `;
+        if (isActionBased && candidateList) {
+          candidateList.innerHTML = `
+            <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
+              <div class="spinner-monotonic"></div>
+              <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-primary);">Querying database...</div>
+            </div>
+          `;
+        }
         
         const query = encodeURIComponent(searchQuery);
         const url = `/api/candidates?page=${currentPage}&limit=${pageSize}&search=${query}&filter=${activeFilter}&min_score=${minScoreFilter}`;
@@ -1231,81 +1304,83 @@
         }
         
         const data = await response.json();
-        candidatesData = data.candidates;
-        totalCandidatesCount = data.total_count;
-        totalPagesCount = data.total_pages;
+        candidatesData = data.candidates || [];
+        totalCandidatesCount = data.total_count || 0;
+        totalPagesCount = data.total_pages || 1;
         
         renderList();
         
-        // Auto-select first candidate on load
         if (candidatesData.length > 0) {
           const selectedId = getSelectedCandidateId();
           if (!selectedId || !candidatesData.some(c => c.candidate_id === selectedId)) {
             selectCandidate(candidatesData[0].candidate_id);
           }
-        } else if (totalCandidatesCount > 0) {
+        } else if (totalCandidatesCount > 0 && rightPane) {
           rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
         }
       } catch (error) {
-        console.error('Error loading candidates:', error);
-        candidateList.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--text-secondary);">Error loading profiles from database.</div>`;
+        printDebugError(error);
       }
     }
 
-    // Render list using pagination
+    function printDebugError(error) {
+      console.error('Data stack fetch failure handled securely:', error);
+      totalCandidatesCount = 0;
+      candidatesData = [];
+      updateUIState();
+    }
+
     function renderList() {
       updateUIState();
-      if (totalCandidatesCount === 0) {
-        return;
-      }
+      if (totalCandidatesCount === 0) return;
 
-      if (candidatesData.length === 0) {
+      if (candidatesData.length === 0 && candidateList) {
         candidateList.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 13px;">No matching candidates found.</div>`;
-        paginationContainer.innerHTML = '';
+        if (paginationContainer) paginationContainer.innerHTML = '';
         return;
       }
 
       const selectedId = getSelectedCandidateId();
 
-      candidateList.innerHTML = candidatesData.map(cand => {
-        const isSelected = cand.candidate_id === selectedId;
-        const scorePct = (cand.score * 100).toFixed(2);
-        
-        return `
-          <div class="candidate-item ${isSelected ? 'selected' : ''}" onclick="selectCandidate('${cand.candidate_id}')">
-            <div class="rank-badge">${String(cand.rank).padStart(2, '0')}</div>
-            <div class="item-details">
-              <div class="item-title-row">
-                <div class="item-name">${cand.profile.anonymized_name}</div>
-                <div class="item-score">${scorePct}%</div>
-              </div>
-              <div class="item-headline">${cand.profile.current_title} at ${cand.profile.current_company}</div>
-              <div class="item-meta">
-                <span>${cand.profile.years_of_experience.toFixed(1)} yrs exp</span>
-                <span>•</span>
-                <span>${cand.redrob_signals.notice_period_days}d notice</span>
+      if (candidateList) {
+        candidateList.innerHTML = candidatesData.map(cand => {
+          const isSelected = cand.candidate_id === selectedId;
+          const scorePct = (cand.score * 100).toFixed(2);
+          
+          return `
+            <div class="candidate-item ${isSelected ? 'selected' : ''}" onclick="selectCandidate('${cand.candidate_id}')">
+              <div class="rank-badge">${String(cand.rank).padStart(2, '0')}</div>
+              <div class="item-details">
+                <div class="item-title-row">
+                  <div class="item-name">${cand.profile.anonymized_name}</div>
+                  <div class="item-score">${scorePct}%</div>
+                </div>
+                <div class="item-headline">${cand.profile.current_title} at ${cand.profile.current_company}</div>
+                <div class="item-meta">
+                  <span>${cand.profile.years_of_experience.toFixed(1)} yrs exp</span>
+                  <span>•</span>
+                  <span>${cand.redrob_signals.notice_period_days}d notice</span>
+                </div>
               </div>
             </div>
-          </div>
-        `;
-      }).join('');
+          `;
+        }).join('');
+      }
 
       renderPaginationControls(totalCandidatesCount);
     }
 
     function changePage(page) {
       currentPage = page;
-      loadCandidates();
+      loadCandidates(false);
     }
 
     function renderPaginationControls(totalItems) {
+      if (!paginationContainer) return;
       const totalPages = totalPagesCount;
       let html = '';
       
-      // Skip back 10 pages (<<)
       html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(Math.max(1, parseInt(currentPage) - 10))" title="Back 10 pages">&lt;&lt;</button>`;
-      
-      // Prev button
       html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(parseInt(currentPage) - 1)">&larr;</button>`;
       
       let startPage = Math.max(1, parseInt(currentPage) - 1);
@@ -1324,19 +1399,15 @@
         html += `<button class="page-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
       }
       
-      // Next button
       html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(parseInt(currentPage) + 1)">&rarr;</button>`;
-      
-      // Skip forward 10 pages (>>)
       html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(Math.min(totalPages, parseInt(currentPage) + 10))" title="Forward 10 pages">&gt;&gt;</button>`;
       
-      // Page Jump Input
       let jumpHtml = `
         <div style="display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 10px; font-size: 11px; color: var(--text-secondary); font-family: var(--font-sans);">
           <span>Go to:</span>
           <input type="number" id="page-jump-input" min="1" max="${totalPages}" value="${currentPage}" style="width: 52px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); font-family: var(--font-mono); font-size: 11px; padding: 3px 6px; text-align: center; outline: none; border-radius: 2px;">
           <span>of ${totalPages}</span>
-          <button onclick="const val = parseInt(document.getElementById('page-jump-input').value); if(val >= 1 && val <= ${totalPages}){ changePage(val); }" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 3px 8px; font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 2px; font-family: var(--font-sans);" onmouseover="this.style.borderColor='var(--text-secondary)'; this.style.color='#fff';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.color='var(--text-secondary)';">Jump</button>
+          <button onclick="const val = parseInt(document.getElementById('page-jump-input').value); if(val >= 1 && val <= ${totalPages}){ changePage(val); }" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 3px 8px; font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 2px; font-family: var(--font-sans);" onmouseover="this.style.borderColor='var(--text-secondary)';" onmouseout="this.style.borderColor='var(--border-color)';">Jump</button>
         </div>
       `;
       
@@ -1344,7 +1415,6 @@
       paginationContainer.style.alignItems = 'center';
       paginationContainer.innerHTML = `<div style="display: flex; gap: 6px; align-items: center;">${html}</div>${jumpHtml}`;
       
-      // Hook enter key on page jump input
       const jumpInput = document.getElementById('page-jump-input');
       if (jumpInput) {
         jumpInput.addEventListener('keydown', (e) => {
@@ -1359,28 +1429,27 @@
     }
 
     function getSelectedCandidateId() {
+      if (!rightPane) return null;
       const selectedEl = rightPane.querySelector('[data-candidate-id]');
       return selectedEl ? selectedEl.getAttribute('data-candidate-id') : null;
     }
 
-    // Selection details viewer
     function selectCandidate(cid) {
       const cand = candidatesData.find(c => c.candidate_id === cid);
-      if (!cand) return;
+      if (!cand || !rightPane) return;
 
-      const items = candidateList.querySelectorAll('.candidate-item');
-      const indexInPage = candidatesData.findIndex(c => c.candidate_id === cid);
-      
-      items.forEach(el => el.classList.remove('selected'));
-      if (indexInPage !== -1 && items[indexInPage]) items[indexInPage].classList.add('selected');
+      if (candidateList) {
+        const items = candidateList.querySelectorAll('.candidate-item');
+        const indexInPage = candidatesData.findIndex(c => c.candidate_id === cid);
+        items.forEach(el => el.classList.remove('selected'));
+        if (indexInPage !== -1 && items[indexInPage]) items[indexInPage].classList.add('selected');
+      }
 
-      // Auto-close sidebar on mobile after selection
-      if (window.innerWidth <= 900) {
+      if (window.innerWidth <= 900 && leftPane && sidebarOverlay) {
         leftPane.classList.remove('open');
         sidebarOverlay.classList.remove('open');
       }
 
-      // Calculate Scores and Gauge Logic
       const scorePct = (cand.score * 100).toFixed(2);
       let gaugeColor = 'var(--gauge-red)';
       if (scorePct >= 85) gaugeColor = 'var(--gauge-green)';
@@ -1389,7 +1458,6 @@
       const circumference = 2 * Math.PI * 45; 
       const strokeDashoffsetTarget = circumference - (scorePct / 100) * circumference;
 
-      // HTML Renderers
       const careerTimeline = cand.career_history.map(job => {
         const endDate = job.end_date ? job.end_date : 'Present';
         return `
@@ -1527,12 +1595,13 @@
       }, 50);
     }
 
-    // Search and Filter Listeners
-    searchInput.addEventListener('input', (e) => {
-      searchQuery = e.target.value;
-      currentPage = 1;
-      loadCandidates();
-    });
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        currentPage = 1;
+        loadCandidates(false);
+      });
+    }
 
     filterBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -1540,100 +1609,100 @@
         e.target.classList.add('active');
         activeFilter = e.target.getAttribute('data-filter');
         currentPage = 1;
-        loadCandidates();
+        loadCandidates(false);
       });
     });
 
-    // Mobile Sidebar Listeners
     function openSidebar() {
-      leftPane.classList.add('open');
-      sidebarOverlay.classList.add('open');
+      if(leftPane) leftPane.classList.add('open');
+      if(sidebarOverlay) sidebarOverlay.classList.add('open');
     }
     
     function closeSidebar() {
-      leftPane.classList.remove('open');
-      sidebarOverlay.classList.remove('open');
+      if(leftPane) leftPane.classList.remove('open');
+      if(sidebarOverlay) sidebarOverlay.classList.remove('open');
     }
 
-    mobileMenuBtn.addEventListener('click', openSidebar);
-    closeSidebarBtn.addEventListener('click', closeSidebar);
-    sidebarOverlay.addEventListener('click', closeSidebar);
+    if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', openSidebar);
+    if(closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
+    if(sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
-    // JD Modal Listeners
-    openJdBtn.addEventListener('click', () => jdModal.classList.add('open'));
-    closeJdBtn.addEventListener('click', () => jdModal.classList.remove('open'));
-    jdModal.addEventListener('click', (e) => {
-      if (e.target === jdModal) jdModal.classList.remove('open');
-    });
+    if(openJdBtn) openJdBtn.addEventListener('click', () => { if(jdModal) jdModal.classList.add('open'); });
+    if(closeJdBtn) closeJdBtn.addEventListener('click', () => { if(jdModal) jdModal.classList.remove('open'); });
+    if(jdModal) {
+      jdModal.addEventListener('click', (e) => {
+        if (e.target === jdModal) jdModal.classList.remove('open');
+      });
+    }
 
-    // Score Percentage Filter Change Handler
-    const scoreFilterSelect = document.getElementById('score-filter-select');
-    scoreFilterSelect.addEventListener('change', (e) => {
-      if (e.target.value === 'custom') {
-        const val = prompt('Enter minimum score percentage (0-100):');
-        const numVal = parseFloat(val);
-        if (!isNaN(numVal) && numVal >= 0 && numVal <= 100) {
-          let opt = Array.from(scoreFilterSelect.options).find(o => o.value == numVal);
-          if (!opt) {
-            opt = document.createElement('option');
-            opt.value = numVal;
-            opt.textContent = `Score \u2265 ${numVal}%`;
-            opt.style.backgroundColor = 'var(--bg-pane)';
-            opt.style.color = 'var(--text-primary)';
-            scoreFilterSelect.insertBefore(opt, scoreFilterSelect.options[scoreFilterSelect.options.length - 1]);
+    if (scoreFilterSelect) {
+      scoreFilterSelect.addEventListener('change', (e) => {
+        if (e.target.value === 'custom') {
+          const val = prompt('Enter minimum score percentage (0-100):');
+          const numVal = parseFloat(val);
+          if (!isNaN(numVal) && numVal >= 0 && numVal <= 100) {
+            let opt = Array.from(scoreFilterSelect.options).find(o => o.value == numVal);
+            if (!opt) {
+              opt = document.createElement('option');
+              opt.value = numVal;
+              opt.textContent = `Score \u2265 ${numVal}%`;
+              scoreFilterSelect.insertBefore(opt, scoreFilterSelect.options[scoreFilterSelect.options.length - 1]);
+            }
+            scoreFilterSelect.value = numVal;
+            minScoreFilter = numVal;
+          } else {
+            scoreFilterSelect.value = '0';
+            minScoreFilter = 0;
           }
-          scoreFilterSelect.value = numVal;
-          minScoreFilter = numVal;
         } else {
-          scoreFilterSelect.value = '0';
-          minScoreFilter = 0;
+          minScoreFilter = parseFloat(e.target.value) || 0;
         }
-      } else {
-        minScoreFilter = parseFloat(e.target.value) || 0;
-      }
-      currentPage = 1;
-      loadCandidates();
-    });
+        currentPage = 1;
+        loadCandidates(false);
+      });
+    }
 
-    // PDF Shortlist Export listeners
     const exportPdfBtn = document.getElementById('export-pdf-btn');
     const exportDropdown = document.getElementById('export-dropdown');
     const confirmExportBtn = document.getElementById('confirm-export-btn');
     const exportThresholdInput = document.getElementById('export-threshold-input');
 
-    exportPdfBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      exportDropdown.style.display = exportDropdown.style.display === 'block' ? 'none' : 'block';
-    });
+    if (exportPdfBtn && exportDropdown) {
+      exportPdfBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        exportDropdown.style.display = exportDropdown.style.display === 'block' ? 'none' : 'block';
+      });
 
-    document.addEventListener('click', (e) => {
-      if (exportDropdown.style.display === 'block' && !exportDropdown.contains(e.target) && e.target !== exportPdfBtn) {
-        exportDropdown.style.display = 'none';
-      }
-    });
+      document.addEventListener('click', (e) => {
+        if (exportDropdown.style.display === 'block' && !exportDropdown.contains(e.target) && e.target !== exportPdfBtn) {
+          exportDropdown.style.display = 'none';
+        }
+      });
+    }
 
-    confirmExportBtn.addEventListener('click', () => {
-      exportDropdown.style.display = 'none';
-      exportShortlistPDF();
-    });
+    if(confirmExportBtn) {
+      confirmExportBtn.addEventListener('click', () => {
+        if(exportDropdown) exportDropdown.style.display = 'none';
+        exportShortlistPDF();
+      });
+    }
 
     async function exportShortlistPDF() {
-      const threshold = parseFloat(exportThresholdInput.value) || 85;
+      const threshold = exportThresholdInput ? (parseFloat(exportThresholdInput.value) || 85) : 85;
       
       try {
-        importStatus.style.display = 'block';
-        importStatus.style.color = 'var(--text-secondary)';
-        importStatus.innerText = 'Generating printable PDF summary...';
-        
-        const response = await fetch(`/api/candidates?limit=-1&min_score=${threshold}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch full shortlist from database.');
+        if (importStatus) {
+          importStatus.style.display = 'block';
+          importStatus.style.color = 'var(--text-secondary)';
+          importStatus.innerText = 'Generating printable PDF summary...';
         }
         
-        const data = await response.json();
-        const shortlisted = data.candidates;
+        const response = await fetch(`/api/candidates?limit=-1&min_score=${threshold}`);
+        if (!response.ok) throw new Error('Failed to fetch full shortlist.');
         
-        importStatus.style.display = 'none';
+        const data = await response.json();
+        const shortlisted = data.candidates || [];
+        if (importStatus) importStatus.style.display = 'none';
         
         if (shortlisted.length === 0) {
           alert(`No candidates match the score threshold \u2265 ${threshold}%.`);
@@ -1675,20 +1744,19 @@
             <title>Redrob Candidate Shortlist - Score \u2265 ${threshold}%</title>
             <style>
               @media print {
-                body { background-color: #fff; color: #000; margin: 0; padding: 20px; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+                body { background-color: #fff; color: #000; margin: 0; padding: 20px; font-family: 'Inter', sans-serif; }
                 @page { size: portrait; margin: 20mm; }
               }
-              body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293b; background-color: #fff; max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+              body { font-family: 'Inter', sans-serif; color: #1e293b; background-color: #fff; max-width: 900px; margin: 0 auto; padding: 40px 20px; }
               table { width: 100%; border-collapse: collapse; margin-top: 20px; }
               th { border-bottom: 2px solid #1e293b; padding: 10px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; text-align: left; }
-              tr { page-break-inside: avoid; }
             </style>
           </head>
           <body onload="window.print();">
             <div style="border-bottom: 3px double #1e293b; padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
               <div>
-                <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 26px; font-weight: bold; margin: 0 0 4px 0; color: #000; letter-spacing: 0.5px;">Redrob Candidate Shortlist</h1>
-                <p style="font-size: 11px; color: #64748b; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Intelligent Matching & Scoring Summary Report</p>
+                <h1 style="font-size: 26px; font-weight: bold; margin: 0 0 4px 0; color: #000; letter-spacing: 0.5px;">Redrob Candidate Shortlist</h1>
+                <p style="font-size: 11px; color: #64748b; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Intelligent Matching Summary Report</p>
               </div>
               <div style="text-align: right; font-family: monospace; font-size: 11px; color: #64748b;">
                 <div>Threshold: \u2265 ${threshold}%</div>
@@ -1696,11 +1764,6 @@
                 <div>Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
               </div>
             </div>
-            
-            <div style="font-size: 12.5px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
-              The following candidate profiles have been processed and ranked by the Redrob AI Matching Engine. Candidate matches are filtered to highlight profiles matching target specifications (5-9 years experience, strong Applied ML/Embeddings/Ranking skills, local/relocation signals, and notice period duration thresholds) with synthetic honeypots successfully excluded.
-            </div>
-            
             <table>
               <thead>
                 <tr>
@@ -1712,9 +1775,7 @@
                   <th style="width: 26%;">Verified Skills</th>
                 </tr>
               </thead>
-              <tbody>
-                ${rows}
-              </tbody>
+              <tbody>${rows}</tbody>
             </table>
           </body>
           </html>
@@ -1723,142 +1784,164 @@
         printWindow.document.write(docHtml);
         printWindow.document.close();
       } catch (err) {
-        console.error('Export error:', err);
-        alert('Failed to export candidate shortlist.');
-        importStatus.style.display = 'none';
+        printDebugError(err);
       }
     }
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        jdModal.classList.remove('open');
+        if(jdModal) jdModal.classList.remove('open');
         closeSidebar();
-        exportDropdown.style.display = 'none';
+        if(exportDropdown) exportDropdown.style.display = 'none';
       }
     });
 
-    // Reset all global UI elements and parameters to default search states
     function resetSearchUI() {
       currentPage = 1;
       searchQuery = '';
       activeFilter = 'all';
       minScoreFilter = 0;
       
-      // Reset filter button UI active state
       filterBtns.forEach(b => b.classList.remove('active'));
       const allBtn = Array.from(filterBtns).find(b => b.getAttribute('data-filter') === 'all');
       if (allBtn) allBtn.classList.add('active');
       
-      // Reset search input value
-      searchInput.value = '';
-      
-      // Reset score select dropdown value
+      if(searchInput) searchInput.value = '';
       const scoreFilterSelect = document.getElementById('score-filter-select');
       if (scoreFilterSelect) scoreFilterSelect.value = '0';
     }
 
-    // Import Listeners
-    importFileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      importStatus.style.display = 'block';
-      importStatus.style.color = 'var(--text-secondary)';
-      importStatus.innerText = 'Uploading and processing ' + file.name + '...';
-
-      candidateList.innerHTML = `
-        <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
-          <div class="spinner-monotonic"></div>
-          <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: #fff;">Evaluating candidates list...</div>
-          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-family: var(--font-mono)">${file.name}</div>
-        </div>
-      `;
-      paginationContainer.innerHTML = '';
-
-      const replaceMode = replaceCheckbox.checked;
-      
-      try {
-        const url = `/api/import?filename=${encodeURIComponent(file.name)}&replace=${replaceMode}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': file.type || 'application/octet-stream'
-          },
-          body: file
-        });
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || 'Server error occurred during import.');
-        }
-
-        const data = await response.json();
-        candidatesData = data.candidates;
-        totalCandidatesCount = data.total_count;
-        totalPagesCount = data.total_pages;
-        
-        importStatus.style.color = 'var(--text-primary)';
-        importStatus.innerText = `Successfully imported and ranked ${file.name}.`;
-        setTimeout(() => {
-          importStatus.style.display = 'none';
-        }, 4000);
-
-        resetSearchUI();
-        loadCandidates();
-      } catch (err) {
-        console.error('Import error:', err);
-        importStatus.style.color = '#ff6b6b';
-        importStatus.innerText = `Error: ${err.message}`;
-        loadCandidates();
-      } finally {
-        importFileInput.value = '';
+    function showProcessingOverlay(message) {
+      const processingOverlay = document.getElementById('processing-overlay');
+      const processingMessage = document.getElementById('processing-message');
+      if (processingOverlay && processingMessage) {
+        processingMessage.textContent = message;
+        processingOverlay.style.display = 'flex';
       }
-    });
+    }
 
-    resetDbBtn.addEventListener('click', async () => {
-      importStatus.style.display = 'block';
-      importStatus.style.color = 'var(--text-secondary)';
-      importStatus.innerText = 'Resetting database...';
-      
-      candidateList.innerHTML = `
-        <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
-          <div class="spinner-monotonic"></div>
-          <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: #fff;">Resetting candidate database...</div>
-          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">Clearing tables...</div>
-        </div>
-      `;
-      paginationContainer.innerHTML = '';
+    function hideProcessingOverlay() {
+      const processingOverlay = document.getElementById('processing-overlay');
+      if (processingOverlay) processingOverlay.style.display = 'none';
+    }
 
-      try {
-        const response = await fetch('/api/reset', { method: 'POST' });
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || 'Server error during reset.');
+    if (importFileInput) {
+      importFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (importStatus) {
+          importStatus.style.display = 'block';
+          importStatus.style.color = 'var(--text-secondary)';
+          importStatus.innerText = 'Uploading and processing ' + file.name + '...';
         }
-        
-        const data = await response.json();
-        candidatesData = data.candidates;
-        totalCandidatesCount = data.total_count;
-        totalPagesCount = data.total_pages;
-        
-        importStatus.style.color = 'var(--text-primary)';
-        importStatus.innerText = 'Database cleared successfully.';
-        setTimeout(() => {
-          importStatus.style.display = 'none';
-        }, 3000);
+        showProcessingOverlay(`Uploading and processing ${file.name}...`);
 
-        resetSearchUI();
-        loadCandidates();
-      } catch (err) {
-        console.error('Reset error:', err);
-        importStatus.style.color = '#ff6b6b';
-        importStatus.innerText = `Reset failed: ${err.message}`;
-        loadCandidates();
-      }
-    });
+        if (candidateList) {
+          candidateList.innerHTML = `
+            <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
+              <div class="spinner-monotonic"></div>
+              <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-primary);">Evaluating candidates list...</div>
+              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-family: var(--font-mono)">${file.name}</div>
+            </div>
+          `;
+        }
+        if (paginationContainer) paginationContainer.innerHTML = '';
 
-    // Load initial data
-    loadCandidates();
+        const replaceMode = replaceCheckbox ? replaceCheckbox.checked : false;
+        
+        try {
+          const url = `/api/import?filename=${encodeURIComponent(file.name)}&replace=${replaceMode}`;
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': file.type || 'application/octet-stream' },
+            body: file
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || 'Server error occurred during import.');
+          }
+
+          const data = await response.json();
+          candidatesData = data.candidates || [];
+          totalCandidatesCount = data.total_count || 0;
+          totalPagesCount = data.total_pages || 1;
+          
+          if (importStatus) {
+            importStatus.style.color = 'var(--text-primary)';
+            importStatus.innerText = `Successfully imported and ranked ${file.name}.`;
+            setTimeout(() => { importStatus.style.display = 'none'; }, 4000);
+          }
+
+          resetSearchUI();
+          await loadCandidates(false);
+        } catch (err) {
+          if (importStatus) {
+            importStatus.style.color = '#ff6b6b';
+            importStatus.innerText = `Error: ${err.message}`;
+          }
+          await loadCandidates(false);
+        } finally {
+          hideProcessingOverlay();
+          importFileInput.value = '';
+        }
+      });
+    }
+
+    if (resetDbBtn) {
+      resetDbBtn.addEventListener('click', async () => {
+        if (importStatus) {
+          importStatus.style.display = 'block';
+          importStatus.style.color = 'var(--text-secondary)';
+          importStatus.innerText = 'Resetting database...';
+        }
+        showProcessingOverlay('Resetting candidate database...');
+        
+        if (candidateList) {
+          candidateList.innerHTML = `
+            <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
+              <div class="spinner-monotonic"></div>
+              <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-primary);">Resetting candidate database...</div>
+            </div>
+          `;
+        }
+        if (paginationContainer) paginationContainer.innerHTML = '';
+
+        try {
+          const response = await fetch('/api/reset', { method: 'POST' });
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || 'Server error during reset.');
+          }
+          
+          const data = await response.json();
+          candidatesData = data.candidates || [];
+          totalCandidatesCount = data.total_count || 0;
+          totalPagesCount = data.total_pages || 1;
+          
+          if (importStatus) {
+            importStatus.style.color = 'var(--text-primary)';
+            importStatus.innerText = 'Database cleared successfully.';
+            setTimeout(() => { importStatus.style.display = 'none'; }, 3000);
+          }
+
+          resetSearchUI();
+          await loadCandidates(false);
+        } catch (err) {
+          if (importStatus) {
+            importStatus.style.color = '#ff6b6b';
+            importStatus.innerText = `Reset failed: ${err.message}`;
+          }
+          await loadCandidates(false);
+        } finally {
+          hideProcessingOverlay();
+        }
+      });
+    }
+
+    // Load initial context securely without hard animations loop hanging
+    loadCandidates(false);
   </script>
 </body>
 </html>
