@@ -303,6 +303,14 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 def run_server():
     init_db()
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM candidates")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"⚠️ Error clearing database on startup: {e}")
     print(f"🚀 Application Engine live on http://localhost:{PORT}")
     http.server.HTTPServer(('', PORT), CustomHTTPRequestHandler).serve_forever()
 
