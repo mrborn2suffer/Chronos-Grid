@@ -381,25 +381,180 @@ def generate_reasoning(cand, final_score, stats):
             
     return reason
 
-def main():
-    parser = argparse.ArgumentParser(description="Parallel Optimized Ranker for Redrob Challenge.")
-    parser.add_argument("--candidates", required=True, help="Path to candidates dataset file (.jsonl, .json, or .csv)")
-    parser.add_argument("--out", required=True, help="Output path for submission CSV")
-    parser.add_argument("--top", type=int, default=100, help="Number of top candidates to output (-1 for all)")
-    args = parser.parse_args()
+def parse_pdf_candidate(file_path):
+    try:
+        import pypdf
+    except ImportError:
+        print(f"Error: pypdf is required to parse PDF candidate resumes.")
+        print(f"Please install it using: pip install pypdf")
+        return []
+        
+    import re
+    import os
+    import hashlib
     
-    print(f"Loading candidate records from {args.candidates}...")
+    try:
+        reader = pypdf.PdfReader(file_path)
+        text = ""
+        for page in reader.pages:
+            t = page.extract_text()
+            if t:
+                text += t + "\n"
+    except Exception as e:
+        print(f"Error reading PDF {file_path}: {e}")
+        return []
+        
+    filename = os.path.basename(file_path)
+    name_guess = os.path.splitext(filename)[0].replace("_", " ").replace("-", " ")
+    name_guess = re.sub(r'(?i)\b(?:resume|cv|biodata|profile)\b', '', name_guess).strip()
+    if not name_guess:
+        name_guess = "Unnamed Candidate"
+        
+    cid = "pdf_" + hashlib.md5(filename.encode()).hexdigest()[:10]
     
-    candidates = []
+    # 1. Experience detection
+    years_exp = 5.0  # default fallback
+    exp_patterns = [
+        r'(\d+(?:\.\d+)?)\s*(?:\+)?\s*(?:years?|yrs?)(?:\s+(?:of\s+)?experience)?',
+        r'(?:experience|exp)[:\-]?\s*(\d+(?:\.\d+)?)\s*(?:years?|yrs?)'
+    ]
+    for pattern in exp_patterns:
+        m = re.search(pattern, text, re.IGNORECASE)
+        if m:
+            try:
+                years_exp = float(m.group(1))
+                break
+            except:
+                pass
+                
+    # 2. Location detection
+    loc = "India"
+    for city in ["pune", "noida", "delhi", "gurgaon", "bangalore", "mumbai", "hyderabad", "chennai"]:
+        if re.search(r'\b' + city + r'\b', text, re.IGNORECASE):
+            loc = city.capitalize()
+            break
+            
+    # 3. Career & Exclusions (TCS, Infosys, etc.)
+    career = []
+    for comp in SERVICES_COMPANIES:
+        if re.search(r'\b' + re.escape(comp) + r'\b', text, re.IGNORECASE):
+            career.append({
+                "company": comp.capitalize(),
+                "title": "Software Engineer",
+                "description": f"Worked at consulting firm {comp}",
+                "duration_months": int(years_exp * 12) if years_exp else 48,
+                "start_date": "2020-01-01",
+                "end_date": "2024-01-01",
+                "is_current": True
+            })
+            break
+            
+    # Honeypot checks
+    if "krutrim" in text.lower():
+        krutrim_early = re.search(r'krutrim.*?(?:2021|2022|2020|2019)', text, re.IGNORECASE | re.DOTALL)
+        if krutrim_early:
+            career.append({
+                "company": "Krutrim",
+                "title": "AI Engineer",
+                "description": "Honeypot trigger",
+                "duration_months": 12,
+                "start_date": "2021-01-01",
+                "end_date": "2022-01-01",
+                "is_current": False
+            })
+    if "sarvam" in text.lower():
+        sarvam_early = re.search(r'sarvam.*?(?:2021|2022|2020|2019)', text, re.IGNORECASE | re.DOTALL)
+        if sarvam_early:
+            career.append({
+                "company": "Sarvam AI",
+                "title": "AI Engineer",
+                "description": "Honeypot trigger",
+                "duration_months": 12,
+                "start_date": "2022-01-01",
+                "end_date": "2023-01-01",
+                "is_current": False
+            })
+            
+    # Default non-exclusion job if career is empty
+    if not career:
+        current_title = "AI Engineer" if "ai" in text.lower() else "Software Engineer"
+        current_company = "Tech Startup"
+        career.append({
+            "company": current_company,
+            "title": current_title,
+            "description": text[:800],
+            "duration_months": int(years_exp * 12) if years_exp else 48,
+            "start_date": "2020-01-01",
+            "end_date": None,
+            "is_current": True
+        })
+        
+    # 4. Skills extraction
+    skills = []
+    all_skills_to_check = REQUIRED_VECTOR_DBS + REQUIRED_EMBEDDINGS + REQUIRED_EVAL + NICE_TO_HAVE_LLM + NICE_TO_HAVE_DIST + ["python"]
+    for sk in all_skills_to_check:
+        if re.search(r'\b' + re.escape(sk) + r'\b', text, re.IGNORECASE):
+            skills.append({
+                "name": sk,
+                "proficiency": "advanced",
+                "duration_months": 24,
+                "endorsements": 5
+            })
+            
+    # 5. Notice Period
+    notice = 30
+    notice_match = re.search(r'(?:notice|notice\s+period)[:\-]?\s*(\d+)\s*days?', text, re.IGNORECASE)
+    if notice_match:
+        try:
+            notice = int(notice_match.group(1))
+        except:
+            pass
+            
+    # 6. Construct Candidate Dict
+    cand = {
+        "candidate_id": cid,
+        "profile": {
+            "anonymized_name": name_guess,
+            "headline": "AI Engineer" if "ai" in text.lower() else "Software Engineer",
+            "summary": text[:1500],
+            "years_of_experience": years_exp,
+            "location": loc,
+            "country": "India",
+            "current_title": career[0]["title"],
+            "current_company": career[0]["company"],
+            "current_industry": "Technology"
+        },
+        "career_history": career,
+        "skills": skills,
+        "redrob_signals": {
+            "notice_period_days": notice,
+            "recruiter_response_rate": 0.85,
+            "last_active_date": "2026-06-20",
+            "open_to_work_flag": True,
+            "github_activity_score": 75 if "github" in text.lower() else -1,
+            "willing_to_relocate": True,
+            "profile_completeness_score": 90,
+            "connection_count": 180,
+            "preferred_work_mode": "hybrid",
+            "avg_response_time_hours": 2.0,
+            "interview_completion_rate": 1.0,
+            "expected_salary_range_inr_lpa": {"min": 15, "max": 25}
+        }
+    }
+    return [cand]
+
+def load_candidates_from_file(file_path):
+    import os
+    if not os.path.exists(file_path):
+        return []
+    ext = os.path.splitext(file_path)[1].lower()
     
-    # Robust file format loader
-    if args.candidates.endswith('.csv'):
-        # CSV format
-        with open(args.candidates, "r", encoding="utf-8") as f:
+    if ext == '.csv':
+        candidates = []
+        with open(file_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 cand = {"candidate_id": row.get("candidate_id")}
-                # Decode nested JSON structures commonly exported to CSV
                 for field in ["profile", "career_history", "education", "skills", "redrob_signals", "certifications", "languages"]:
                     val = row.get(field, "")
                     if val:
@@ -412,38 +567,144 @@ def main():
                 if not isinstance(cand.get("skills"), list): cand["skills"] = []
                 if not isinstance(cand.get("redrob_signals"), dict): cand["redrob_signals"] = {}
                 candidates.append(cand)
-    else:
-        # JSON or JSONL format (peeks to detect array vs lines)
+        return candidates
+        
+    elif ext in ['.json', '.jsonl']:
         is_jsonl = True
         try:
-            with open(args.candidates, "r", encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 first_char = f.read(1)
                 if first_char == "[":
                     is_jsonl = False
         except:
             pass
 
+        candidates = []
         if is_jsonl:
-            with open(args.candidates, "r", encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 for line in f:
                     if not line.strip(): continue
-                    candidates.append(json.loads(line))
+                    try:
+                        candidates.append(json.loads(line))
+                    except Exception as e:
+                        print(f"JSONL parse error in {file_path}: {e}")
         else:
-            with open(args.candidates, "r", encoding="utf-8") as f:
-                candidates = json.load(f)
-                
+            with open(file_path, "r", encoding="utf-8") as f:
+                try:
+                    candidates = json.load(f)
+                except Exception as e:
+                    print(f"JSON parse error in {file_path}: {e}")
+        return candidates
+        
+    elif ext == '.xml':
+        import xml.etree.ElementTree as ET
+        try:
+            tree = ET.parse(file_path)
+            root = tree.getroot()
+        except Exception as e:
+            print(f"XML parse error in {file_path}: {e}")
+            return []
+        
+        def elem_to_val(elem):
+            if len(elem) == 0:
+                text = elem.text.strip() if elem.text else ""
+                if text.lower() == "true": return True
+                if text.lower() == "false": return False
+                try:
+                    if "." in text: return float(text)
+                    return int(text)
+                except ValueError:
+                    return text
+            
+            child_tags = [c.tag for c in elem]
+            all_same = len(set(child_tags)) == 1
+            is_list_tag = elem.tag.lower() in ["skills", "career_history", "education", "certifications", "languages", "candidates"]
+            
+            if all_same or is_list_tag:
+                return [elem_to_val(c) for c in elem]
+            
+            d = {}
+            for c in elem:
+                t = c.tag
+                v = elem_to_val(c)
+                if t in d:
+                    if isinstance(d[t], list):
+                        d[t].append(v)
+                    else:
+                        d[t] = [d[t], v]
+                else:
+                    d[t] = v
+            return d
+            
+        data = elem_to_val(root)
+        if isinstance(data, list):
+            return data
+        elif isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, list) and k.lower() in ["candidate", "candidates"]:
+                    return v
+            return [data]
+        return []
+        
+    elif ext in ['.yaml', '.yml']:
+        import yaml
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+        except Exception as e:
+            print(f"YAML parse error in {file_path}: {e}")
+            return []
+            
+        if isinstance(data, list):
+            return data
+        elif isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, list) and k.lower() in ["candidate", "candidates"]:
+                    return v
+            return [data]
+        return []
+        
+    elif ext == '.pdf':
+        return parse_pdf_candidate(file_path)
+        
+    else:
+        print(f"Skipping unsupported file extension: {file_path}")
+        return []
+
+def load_candidates_from_path(candidates_path):
+    import os
+    if not os.path.exists(candidates_path):
+        print(f"Error: path does not exist: {candidates_path}")
+        return []
+        
+    if os.path.isdir(candidates_path):
+        all_candidates = []
+        for root_dir, dirs, files in os.walk(candidates_path):
+            for file in files:
+                full_path = os.path.join(root_dir, file)
+                if file.startswith('.'): continue
+                cands = load_candidates_from_file(full_path)
+                if cands:
+                    all_candidates.extend(cands)
+        return all_candidates
+    else:
+        return load_candidates_from_file(candidates_path)
+
+def rank_candidates(candidates, top_n=-1):
     total_candidates = len(candidates)
-    print(f"Loaded {total_candidates} candidates.")
-    
-    # Parallel processing of features and honeypot filters
-    n_cores = mp.cpu_count()
-    print(f"Distributing scoring load across {n_cores} parallel cores...")
-    
-    chunk_size = total_candidates // n_cores + 1
-    batches = [candidates[i:i + chunk_size] for i in range(0, total_candidates, chunk_size)]
-    
-    with mp.Pool(processes=n_cores) as pool:
-        batches_results = pool.map(process_candidate_batch, batches)
+    if total_candidates == 0:
+        return []
+        
+    # Check if we should process sequentially to avoid overhead on small lists
+    if total_candidates < 20:
+        batches_results = [process_candidate_batch(candidates)]
+    else:
+        n_cores = mp.cpu_count()
+        chunk_size = max(1, total_candidates // n_cores + 1)
+        batches = [candidates[i:i + chunk_size] for i in range(0, total_candidates, chunk_size)]
+        
+        with mp.Pool(processes=n_cores) as pool:
+            batches_results = pool.map(process_candidate_batch, batches)
         
     # Flatten results
     scored_candidates = []
@@ -454,7 +715,6 @@ def main():
             profile_texts.append(item["profile_text"])
             
     # TF-IDF Matching
-    print("Fitting TF-IDF matching layer...")
     query_text = (
         "Senior AI Engineer Applied ML Machine Learning NLP embeddings based retrieval systems "
         "Pinecone Weaviate Qdrant Milvus OpenSearch Elasticsearch FAISS python evaluation "
@@ -469,8 +729,6 @@ def main():
         similarities = similarities / similarities.max()
         
     # Combine final scores
-    print("Synthesizing scoring components...")
-    hp_count = 0
     final_scored = []
     for idx, item in enumerate(scored_candidates):
         exp, role, ped, skill, behavior_mult, loc_mult = item["sub_scores"]
@@ -481,7 +739,6 @@ def main():
         
         if item["is_hp"]:
             final_score = 0.0
-            hp_count += 1
             
         final_scored.append({
             "candidate_id": item["cid"],
@@ -497,50 +754,64 @@ def main():
                 "behavior": behavior_mult,
                 "location": loc_mult
             },
-            "candidate_index": idx # back-pointer to pull the original dict
+            "candidate_index": idx
         })
         
-    print(f"Identified {hp_count} honeypots. Excluded from top selection.")
-    
     # Sort and rank
     final_scored.sort(key=lambda x: (-x["score"], x["candidate_id"]))
     
     # Calculate output limit
-    limit = args.top
+    limit = top_n
     if limit == -1 or limit > len(final_scored):
         limit = len(final_scored)
         
     top_candidates = final_scored[:limit]
     
-    print("\nTop 5 Candidates Preview:")
-    for i, item in enumerate(top_candidates[:5]):
-        # Reconstruct profile only for the top 5 preview and top rows
-        orig_index = item["candidate_index"]
-        p = candidates[orig_index]["profile"]
-        print(f"Rank {i+1}: {item['candidate_id']} | Score: {item['score']:.4f} | Yrs: {p['years_of_experience']} | Title: {p['current_title']} | Company: {p['current_company']}")
-        
-    # Generate reasoning and compile CSV rows
-    print(f"Generating grounded reasonings for top {limit} shortlist...")
-    csv_rows = []
+    # Reconstruct final detailed objects
+    ranked_candidates = []
     for rank_idx, item in enumerate(top_candidates):
         rank = rank_idx + 1
         cid = item["candidate_id"]
         score = item["score"]
-        
-        # Load the original full candidate dictionary only for this top item (avoids IPC deserialization overhead)
         orig_index = item["candidate_index"]
-        cand_dict = candidates[orig_index]
+        cand_dict = candidates[orig_index].copy()
         
         reason = generate_reasoning(cand_dict, score, item["sub_scores"])
-        csv_rows.append([cid, rank, f"{score:.6f}", reason])
         
+        cand_dict["rank"] = rank
+        cand_dict["score"] = score
+        cand_dict["reasoning"] = reason
+        ranked_candidates.append(cand_dict)
+        
+    return ranked_candidates
+
+def main():
+    parser = argparse.ArgumentParser(description="Parallel Optimized Ranker for Redrob Challenge.")
+    parser.add_argument("--candidates", required=True, help="Path to candidates dataset file or directory (.jsonl, .json, .csv, .xml, .yaml, .pdf)")
+    parser.add_argument("--out", required=True, help="Output path for submission CSV")
+    parser.add_argument("--top", type=int, default=100, help="Number of top candidates to output (-1 for all)")
+    args = parser.parse_args()
+    
+    print(f"Loading candidate records from {args.candidates}...")
+    candidates = load_candidates_from_path(args.candidates)
+    total_candidates = len(candidates)
+    print(f"Loaded {total_candidates} candidates.")
+    
+    if total_candidates == 0:
+        print("No candidates loaded. Exiting.")
+        sys.exit(0)
+        
+    print(f"Ranking candidates...")
+    ranked = rank_candidates(candidates, args.top)
+    
     # Write output file
-    print(f"Writing top-{limit} ranked candidates to {args.out}...")
+    print(f"Writing ranked candidates to {args.out}...")
     with open(args.out, "w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["candidate_id", "rank", "score", "reasoning"])
-        writer.writerows(csv_rows)
-        
+        for cand in ranked:
+            writer.writerow([cand["candidate_id"], cand["rank"], f"{cand['score']:.6f}", cand["reasoning"]])
+            
     print("Ranking process completed successfully!")
 
 if __name__ == "__main__":

@@ -263,11 +263,13 @@
 
   .rank-badge {
     font-family: var(--font-mono);
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-muted);
-    line-height: 1;
-    width: 28px;
+    line-height: 1.2;
+    min-width: 52px;
+    flex-shrink: 0;
+    margin-right: 8px;
   }
 
   .candidate-item.selected .rank-badge {
@@ -913,6 +915,41 @@
   ::-webkit-scrollbar-track { background: var(--bg-main); }
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  /* Loading Spinner and Interactive Components */
+  .spinner-monotonic {
+    border: 2px solid var(--border-color);
+    border-top: 2px solid var(--text-primary);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .filter-select {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    outline: none;
+    border-radius: 0;
+    transition: all 0.2s ease;
+  }
+  .filter-select:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+  }
+  .filter-select:focus {
+    border-color: var(--accent);
+  }
 </style>
 </head>
 <body>
@@ -925,7 +962,24 @@
         <p>Intelligent Candidate Discovery & Ranking Dashboard</p>
       </div>
     </div>
-    <div>
+    <div style="display: flex; gap: 12px; align-items: center; position: relative;">
+      <!-- PDF Export Option -->
+      <div style="position: relative; display: inline-block;">
+        <button class="jd-toggle-btn" id="export-pdf-btn" style="display: flex; align-items: center; gap: 6px;">
+          Export Shortlist
+        </button>
+        <div id="export-dropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 8px; background-color: var(--bg-pane); border: 1px solid var(--border-color); width: 220px; z-index: 1000; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: left;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600;">Shortlist Threshold</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label style="font-size: 11.5px; color: var(--text-primary); display: flex; align-items: center; justify-content: space-between;">
+              <span>Min Score %:</span>
+              <input type="number" id="export-threshold-input" min="1" max="100" value="85" style="width: 58px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); font-family: var(--font-mono); font-size: 11.5px; padding: 4px; text-align: center; outline: none; border-radius: 2px;">
+            </label>
+            <button id="confirm-export-btn" style="background: var(--text-primary); color: var(--bg-main); border: 1px solid var(--text-primary); padding: 7px; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; border-radius: 2px; text-align: center; transition: all 0.2s;" onmouseover="this.style.opacity='0.9';" onmouseout="this.style.opacity='1';">Print / Save PDF</button>
+          </div>
+        </div>
+      </div>
+      
       <button class="jd-toggle-btn" id="open-jd-btn">View Job Description</button>
     </div>
   </header>
@@ -935,6 +989,24 @@
 
     <!-- Left panel (Sidebar on mobile) -->
     <div class="left-pane" id="left-pane">
+      <!-- Import candidates block -->
+      <div class="import-container" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-pane);">
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600;">Import Candidates</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="border: 1px dashed var(--border-color); padding: 10px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: border-color 0.2s ease; background-color: var(--bg-main);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border-color)'">
+            <span style="font-size: 12px; color: var(--text-secondary);">Upload JSON, CSV, PDF, XML, YAML...</span>
+            <input type="file" id="import-file-input" style="display: none;" accept=".json,.jsonl,.csv,.xml,.yaml,.yml,.pdf">
+          </label>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
+              <input type="checkbox" id="replace-checkbox" style="accent-color: var(--text-primary);"> Replace current list
+            </label>
+            <button id="reset-db-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 4px 8px; font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.borderColor='var(--text-secondary)'; this.style.color='#fff';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.color='var(--text-secondary)';">Reset</button>
+          </div>
+          <div id="import-status" style="font-size: 11px; color: var(--text-muted); display: none; margin-top: 4px; line-height: 1.4;"></div>
+        </div>
+      </div>
+
       <div class="search-container">
         <div class="mobile-close-container">
           <span>Candidates</span>
@@ -949,6 +1021,16 @@
           <button class="filter-btn" data-filter="product">Product Co.</button>
           <button class="filter-btn" data-filter="notice">Notice &le; 30d</button>
           <button class="filter-btn" data-filter="local">Pune/Noida</button>
+          <select class="filter-select" id="score-filter-select" title="Filter by minimum score percentage">
+            <option value="0">Min Score</option>
+            <option value="85">Score &ge; 85%</option>
+            <option value="80">Score &ge; 80%</option>
+            <option value="75">Score &ge; 75%</option>
+            <option value="70">Score &ge; 70%</option>
+            <option value="60">Score &ge; 60%</option>
+            <option value="50">Score &ge; 50%</option>
+            <option value="custom">Custom %...</option>
+          </select>
         </div>
       </div>
       
@@ -1024,8 +1106,11 @@
     let candidatesData = [];
     let activeFilter = 'all';
     let searchQuery = '';
+    let minScoreFilter = 0;
     let currentPage = 1;
     const pageSize = 20;
+    let totalCandidatesCount = 0;
+    let totalPagesCount = 1;
 
     // Elements
     const candidateList = document.getElementById('candidate-list');
@@ -1037,6 +1122,10 @@
     const jdModal = document.getElementById('jd-modal');
     const openJdBtn = document.getElementById('open-jd-btn');
     const closeJdBtn = document.getElementById('close-jd-btn');
+    const importFileInput = document.getElementById('import-file-input');
+    const replaceCheckbox = document.getElementById('replace-checkbox');
+    const resetDbBtn = document.getElementById('reset-db-btn');
+    const importStatus = document.getElementById('import-status');
 
     // Mobile Sidebar Elements
     const leftPane = document.getElementById('left-pane');
@@ -1044,82 +1133,57 @@
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const closeSidebarBtn = document.getElementById('close-sidebar-btn');
 
-    // Fetch Candidates Data
+    // Fetch Candidates Data from SQLite database API
     async function loadCandidates() {
       try {
-        const response = await fetch('extracted_details.json');
-        candidatesData = await response.json();
+        candidateList.innerHTML = `
+          <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
+            <div class="spinner-monotonic"></div>
+            <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: #fff;">Querying database...</div>
+          </div>
+        `;
+        
+        const query = encodeURIComponent(searchQuery);
+        const url = `/api/candidates?page=${currentPage}&limit=${pageSize}&search=${query}&filter=${activeFilter}&min_score=${minScoreFilter}`;
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Failed to fetch candidates from database.');
+        }
+        
+        const data = await response.json();
+        candidatesData = data.candidates;
+        totalCandidatesCount = data.total_count;
+        totalPagesCount = data.total_pages;
+        
         renderList();
         
         // Auto-select first candidate on load
-        const filtered = candidatesData.filter(passFilter);
-        if (filtered.length > 0) {
-          selectCandidate(filtered[0].candidate_id);
+        if (candidatesData.length > 0) {
+          const selectedId = getSelectedCandidateId();
+          if (!selectedId || !candidatesData.some(c => c.candidate_id === selectedId)) {
+            selectCandidate(candidatesData[0].candidate_id);
+          }
+        } else {
+          rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
         }
       } catch (error) {
-        console.error('Error loading candidate details:', error);
-        candidateList.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--text-secondary);">Error loading profiles dataset.</div>`;
+        console.error('Error loading candidates:', error);
+        candidateList.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--text-secondary);">Error loading profiles from database.</div>`;
       }
-    }
-
-    // Check Filters
-    function passFilter(cand) {
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const name = cand.profile.anonymized_name.toLowerCase();
-        const headline = cand.profile.headline.toLowerCase();
-        const currentTitle = cand.profile.current_title.toLowerCase();
-        const hasSkill = cand.skills.some(s => s.name.toLowerCase().includes(query));
-        
-        if (!name.includes(query) && !headline.includes(query) && !currentTitle.includes(query) && !hasSkill) {
-          return false;
-        }
-      }
-
-      if (activeFilter === 'all') return true;
-      if (activeFilter === 'exp') {
-        const yrs = cand.profile.years_of_experience;
-        return yrs >= 5.0 && yrs <= 9.0;
-      }
-      if (activeFilter === 'product') {
-        const services = ["tcs", "infosys", "wipro", "accenture", "cognizant", "capgemini", "tech mahindra", "hcl", "mphasis", "mindtree", "lti", "l&t infotech"];
-        let total = 0, serv = 0;
-        cand.career_history.forEach(job => {
-          const comp = job.company.toLowerCase();
-          total += job.duration_months;
-          if (services.some(s => comp.includes(s))) serv += job.duration_months;
-        });
-        return total > 0 && serv < total;
-      }
-      if (activeFilter === 'notice') return cand.redrob_signals.notice_period_days <= 30;
-      if (activeFilter === 'local') {
-        const loc = cand.profile.location.toLowerCase();
-        return loc.includes('pune') || loc.includes('noida') || loc.includes('delhi') || loc.includes('ncr') || loc.includes('gurgaon');
-      }
-
-      return true;
     }
 
     // Render list using pagination
     function renderList() {
-      const filtered = candidatesData.filter(passFilter);
-      const totalItems = filtered.length;
-      const totalPages = Math.ceil(totalItems / pageSize) || 1;
-      
-      if (currentPage > totalPages) currentPage = totalPages;
-      if (currentPage < 1) currentPage = 1;
-
-      if (totalItems === 0) {
+      if (candidatesData.length === 0) {
         candidateList.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 13px;">No matching candidates found.</div>`;
         paginationContainer.innerHTML = '';
         return;
       }
 
-      const startIdx = (currentPage - 1) * pageSize;
-      const pageCandidates = filtered.slice(startIdx, startIdx + pageSize);
       const selectedId = getSelectedCandidateId();
 
-      candidateList.innerHTML = pageCandidates.map(cand => {
+      candidateList.innerHTML = candidatesData.map(cand => {
         const isSelected = cand.candidate_id === selectedId;
         const scorePct = (cand.score * 100).toFixed(2);
         
@@ -1142,19 +1206,25 @@
         `;
       }).join('');
 
-      renderPaginationControls(totalItems);
+      renderPaginationControls(totalCandidatesCount);
     }
 
     function changePage(page) {
       currentPage = page;
-      renderList();
+      loadCandidates();
     }
 
     function renderPaginationControls(totalItems) {
-      const totalPages = Math.ceil(totalItems / pageSize) || 1;
-      let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">&larr;</button>`;
+      const totalPages = totalPagesCount;
+      let html = '';
       
-      let startPage = Math.max(1, currentPage - 1);
+      // Skip back 10 pages (<<)
+      html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(Math.max(1, parseInt(currentPage) - 10))" title="Back 10 pages">&lt;&lt;</button>`;
+      
+      // Prev button
+      html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(parseInt(currentPage) - 1)">&larr;</button>`;
+      
+      let startPage = Math.max(1, parseInt(currentPage) - 1);
       let endPage = Math.min(totalPages, startPage + 2);
       if (endPage - startPage < 2) startPage = Math.max(1, endPage - 2);
       
@@ -1169,9 +1239,39 @@
         if (endPage < totalPages - 1) html += `<span style="color: var(--text-muted); font-size: 11px; padding: 0 4px;">...</span>`;
         html += `<button class="page-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
       }
-      html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">&rarr;</button>`;
       
-      paginationContainer.innerHTML = html;
+      // Next button
+      html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(parseInt(currentPage) + 1)">&rarr;</button>`;
+      
+      // Skip forward 10 pages (>>)
+      html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(Math.min(totalPages, parseInt(currentPage) + 10))" title="Forward 10 pages">&gt;&gt;</button>`;
+      
+      // Page Jump Input
+      let jumpHtml = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 10px; font-size: 11px; color: var(--text-secondary); font-family: var(--font-sans);">
+          <span>Go to:</span>
+          <input type="number" id="page-jump-input" min="1" max="${totalPages}" value="${currentPage}" style="width: 52px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); font-family: var(--font-mono); font-size: 11px; padding: 3px 6px; text-align: center; outline: none; border-radius: 2px;">
+          <span>of ${totalPages}</span>
+          <button onclick="const val = parseInt(document.getElementById('page-jump-input').value); if(val >= 1 && val <= ${totalPages}){ changePage(val); }" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 3px 8px; font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 2px; font-family: var(--font-sans);" onmouseover="this.style.borderColor='var(--text-secondary)'; this.style.color='#fff';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.color='var(--text-secondary)';">Jump</button>
+        </div>
+      `;
+      
+      paginationContainer.style.flexDirection = 'column';
+      paginationContainer.style.alignItems = 'center';
+      paginationContainer.innerHTML = `<div style="display: flex; gap: 6px; align-items: center;">${html}</div>${jumpHtml}`;
+      
+      // Hook enter key on page jump input
+      const jumpInput = document.getElementById('page-jump-input');
+      if (jumpInput) {
+        jumpInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            const val = parseInt(jumpInput.value);
+            if (val >= 1 && val <= totalPages) {
+              changePage(val);
+            }
+          }
+        });
+      }
     }
 
     function getSelectedCandidateId() {
@@ -1185,9 +1285,7 @@
       if (!cand) return;
 
       const items = candidateList.querySelectorAll('.candidate-item');
-      const filtered = candidatesData.filter(passFilter);
-      const startIdx = (currentPage - 1) * pageSize;
-      const indexInPage = filtered.slice(startIdx, startIdx + pageSize).findIndex(c => c.candidate_id === cid);
+      const indexInPage = candidatesData.findIndex(c => c.candidate_id === cid);
       
       items.forEach(el => el.classList.remove('selected'));
       if (indexInPage !== -1 && items[indexInPage]) items[indexInPage].classList.add('selected');
@@ -1349,14 +1447,7 @@
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
       currentPage = 1;
-      renderList();
-      const filtered = candidatesData.filter(passFilter);
-      if (filtered.length > 0) {
-        const selectedId = getSelectedCandidateId();
-        if (!filtered.some(c => c.candidate_id === selectedId)) selectCandidate(filtered[0].candidate_id);
-      } else {
-        rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
-      }
+      loadCandidates();
     });
 
     filterBtns.forEach(btn => {
@@ -1365,10 +1456,7 @@
         e.target.classList.add('active');
         activeFilter = e.target.getAttribute('data-filter');
         currentPage = 1;
-        renderList();
-        const filtered = candidatesData.filter(passFilter);
-        if (filtered.length > 0) selectCandidate(filtered[0].candidate_id);
-        else rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
+        loadCandidates();
       });
     });
 
@@ -1393,10 +1481,285 @@
     jdModal.addEventListener('click', (e) => {
       if (e.target === jdModal) jdModal.classList.remove('open');
     });
+
+    // Score Percentage Filter Change Handler
+    const scoreFilterSelect = document.getElementById('score-filter-select');
+    scoreFilterSelect.addEventListener('change', (e) => {
+      if (e.target.value === 'custom') {
+        const val = prompt('Enter minimum score percentage (0-100):');
+        const numVal = parseFloat(val);
+        if (!isNaN(numVal) && numVal >= 0 && numVal <= 100) {
+          let opt = Array.from(scoreFilterSelect.options).find(o => o.value == numVal);
+          if (!opt) {
+            opt = document.createElement('option');
+            opt.value = numVal;
+            opt.textContent = `Score \u2265 ${numVal}%`;
+            opt.style.backgroundColor = 'var(--bg-pane)';
+            opt.style.color = 'var(--text-primary)';
+            scoreFilterSelect.insertBefore(opt, scoreFilterSelect.options[scoreFilterSelect.options.length - 1]);
+          }
+          scoreFilterSelect.value = numVal;
+          minScoreFilter = numVal;
+        } else {
+          scoreFilterSelect.value = '0';
+          minScoreFilter = 0;
+        }
+      } else {
+        minScoreFilter = parseFloat(e.target.value) || 0;
+      }
+      currentPage = 1;
+      loadCandidates();
+    });
+
+    // PDF Shortlist Export listeners
+    const exportPdfBtn = document.getElementById('export-pdf-btn');
+    const exportDropdown = document.getElementById('export-dropdown');
+    const confirmExportBtn = document.getElementById('confirm-export-btn');
+    const exportThresholdInput = document.getElementById('export-threshold-input');
+
+    exportPdfBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      exportDropdown.style.display = exportDropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (exportDropdown.style.display === 'block' && !exportDropdown.contains(e.target) && e.target !== exportPdfBtn) {
+        exportDropdown.style.display = 'none';
+      }
+    });
+
+    confirmExportBtn.addEventListener('click', () => {
+      exportDropdown.style.display = 'none';
+      exportShortlistPDF();
+    });
+
+    async function exportShortlistPDF() {
+      const threshold = parseFloat(exportThresholdInput.value) || 85;
+      
+      try {
+        importStatus.style.display = 'block';
+        importStatus.style.color = 'var(--text-secondary)';
+        importStatus.innerText = 'Generating printable PDF summary...';
+        
+        const response = await fetch(`/api/candidates?limit=-1&min_score=${threshold}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch full shortlist from database.');
+        }
+        
+        const data = await response.json();
+        const shortlisted = data.candidates;
+        
+        importStatus.style.display = 'none';
+        
+        if (shortlisted.length === 0) {
+          alert(`No candidates match the score threshold \u2265 ${threshold}%.`);
+          return;
+        }
+        
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+          alert('Please allow popups to export the candidate list.');
+          return;
+        }
+        
+        let rows = shortlisted.map(c => {
+          const skillsList = c.skills.map(s => s.name).slice(0, 6).join(', ');
+          return `
+            <tr style="border-bottom: 1px solid #e2e8f0; page-break-inside: avoid;">
+              <td style="padding: 12px 8px; font-family: monospace; font-size: 12px; font-weight: bold; text-align: center;">#${c.rank}</td>
+              <td style="padding: 12px 8px;">
+                <div style="font-weight: bold; font-size: 13px; color: #1e293b;">${c.profile.anonymized_name}</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${c.profile.current_title} at ${c.profile.current_company}</div>
+              </td>
+              <td style="padding: 12px 8px; font-family: monospace; font-size: 12px; font-weight: bold; text-align: center; color: #0f766e;">${(c.score * 100).toFixed(2)}%</td>
+              <td style="padding: 12px 8px; font-size: 12px; text-align: center;">${c.profile.years_of_experience.toFixed(1)} Yrs</td>
+              <td style="padding: 12px 8px; font-size: 12px; text-align: center;">${c.redrob_signals.notice_period_days} Days</td>
+              <td style="padding: 12px 8px; font-size: 11px; color: #475569;">${skillsList}</td>
+            </tr>
+            <tr style="border-bottom: 2px solid #cbd5e1; page-break-inside: avoid;">
+              <td colspan="6" style="padding: 8px 12px 14px 12px; font-size: 11.5px; font-style: italic; color: #334155; background-color: #f8fafc; line-height: 1.5;">
+                <strong>System Evaluation:</strong> "${c.reasoning}"
+              </td>
+            </tr>
+          `;
+        }).join('');
+        
+        const docHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Redrob Candidate Shortlist - Score \u2265 ${threshold}%</title>
+            <style>
+              @media print {
+                body { background-color: #fff; color: #000; margin: 0; padding: 20px; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+                @page { size: portrait; margin: 20mm; }
+              }
+              body { font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293b; background-color: #fff; max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th { border-bottom: 2px solid #1e293b; padding: 10px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; text-align: left; }
+              tr { page-break-inside: avoid; }
+            </style>
+          </head>
+          <body onload="window.print();">
+            <div style="border-bottom: 3px double #1e293b; padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+              <div>
+                <h1 style="font-family: 'Playfair Display', Georgia, serif; font-size: 26px; font-weight: bold; margin: 0 0 4px 0; color: #000; letter-spacing: 0.5px;">Redrob Candidate Shortlist</h1>
+                <p style="font-size: 11px; color: #64748b; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Intelligent Matching & Scoring Summary Report</p>
+              </div>
+              <div style="text-align: right; font-family: monospace; font-size: 11px; color: #64748b;">
+                <div>Threshold: \u2265 ${threshold}%</div>
+                <div>Count: ${shortlisted.length} Candidates</div>
+                <div>Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+              </div>
+            </div>
+            
+            <div style="font-size: 12.5px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
+              The following candidate profiles have been processed and ranked by the Redrob AI Matching Engine. Candidate matches are filtered to highlight profiles matching target specifications (5-9 years experience, strong Applied ML/Embeddings/Ranking skills, local/relocation signals, and notice period duration thresholds) with synthetic honeypots successfully excluded.
+            </div>
+            
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 8%; text-align: center;">Rank</th>
+                  <th style="width: 32%;">Candidate Name / ID</th>
+                  <th style="width: 12%; text-align: center;">Match Score</th>
+                  <th style="width: 10%; text-align: center;">Experience</th>
+                  <th style="width: 12%; text-align: center;">Notice Period</th>
+                  <th style="width: 26%;">Verified Skills</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          </body>
+          </html>
+        `;
+        
+        printWindow.document.write(docHtml);
+        printWindow.document.close();
+      } catch (err) {
+        console.error('Export error:', err);
+        alert('Failed to export candidate shortlist.');
+        importStatus.style.display = 'none';
+      }
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         jdModal.classList.remove('open');
         closeSidebar();
+        exportDropdown.style.display = 'none';
+      }
+    });
+
+    // Import Listeners
+    importFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      importStatus.style.display = 'block';
+      importStatus.style.color = 'var(--text-secondary)';
+      importStatus.innerText = 'Uploading and processing ' + file.name + '...';
+
+      candidateList.innerHTML = `
+        <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
+          <div class="spinner-monotonic"></div>
+          <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: #fff;">Evaluating candidates list...</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-family: var(--font-mono)">${file.name}</div>
+        </div>
+      `;
+      paginationContainer.innerHTML = '';
+
+      const replaceMode = replaceCheckbox.checked;
+      
+      try {
+        const url = `/api/import?filename=${encodeURIComponent(file.name)}&replace=${replaceMode}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream'
+          },
+          body: file
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || 'Server error occurred during import.');
+        }
+
+        const data = await response.json();
+        candidatesData = data.candidates;
+        totalCandidatesCount = data.total_count;
+        totalPagesCount = data.total_pages;
+        
+        importStatus.style.color = 'var(--text-primary)';
+        importStatus.innerText = `Successfully imported and ranked ${file.name}.`;
+        setTimeout(() => {
+          importStatus.style.display = 'none';
+        }, 4000);
+
+        currentPage = 1;
+        renderList();
+        
+        if (candidatesData.length > 0) {
+          selectCandidate(candidatesData[0].candidate_id);
+        } else {
+          rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
+        }
+      } catch (err) {
+        console.error('Import error:', err);
+        importStatus.style.color = '#ff6b6b';
+        importStatus.innerText = `Error: ${err.message}`;
+        renderList();
+      } finally {
+        importFileInput.value = '';
+      }
+    });
+
+    resetDbBtn.addEventListener('click', async () => {
+      importStatus.style.display = 'block';
+      importStatus.style.color = 'var(--text-secondary)';
+      importStatus.innerText = 'Resetting database to default candidates...';
+      
+      candidateList.innerHTML = `
+        <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
+          <div class="spinner-monotonic"></div>
+          <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: #fff;">Resetting candidate database...</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">Running ML ranking weights...</div>
+        </div>
+      `;
+      paginationContainer.innerHTML = '';
+
+      try {
+        const response = await fetch('/api/reset', { method: 'POST' });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || 'Server error during reset.');
+        }
+        
+        const data = await response.json();
+        candidatesData = data.candidates;
+        totalCandidatesCount = data.total_count;
+        totalPagesCount = data.total_pages;
+        
+        importStatus.style.color = 'var(--text-primary)';
+        importStatus.innerText = 'Database reset successful.';
+        setTimeout(() => {
+          importStatus.style.display = 'none';
+        }, 3000);
+
+        currentPage = 1;
+        renderList();
+        
+        if (candidatesData.length > 0) {
+          selectCandidate(candidatesData[0].candidate_id);
+        }
+      } catch (err) {
+        console.error('Reset error:', err);
+        importStatus.style.color = '#ff6b6b';
+        importStatus.innerText = `Reset failed: ${err.message}`;
+        renderList();
       }
     });
 

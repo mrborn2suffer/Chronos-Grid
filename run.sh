@@ -28,14 +28,9 @@ if [ -f "$VALIDATOR_PATH" ]; then
     echo "=========================================================="
 fi
 
-# Run the python ranker for the frontend dashboard (500 candidates for pagination showcase)
-echo "📈 Generating 500 ranked candidates for the web dashboard..."
-python3 rank.py --candidates "$CANDIDATES_PATH" --out "./dashboard_candidates.csv" --top 500
+# Populate SQLite database for the web dashboard
+echo "📊 Populating SQLite database with ranked candidates..."
+python3 populate_db.py
 echo "=========================================================="
-
-# Extract profile details for the frontend
-echo "📊 Extracting candidate details for the dashboard..."
-python3 extract_profiles.py
-echo "=========================================================="
-echo "🖥️ Web dashboard data updated! To launch, run: ./serve.sh"
+echo "🖥️ Web dashboard database updated! To launch, run: ./serve.sh"
 echo "=========================================================="

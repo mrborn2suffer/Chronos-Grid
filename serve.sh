@@ -22,5 +22,5 @@ elif command -v open > /dev/null; then
     open "http://localhost:$PORT" &
 fi
 
-# Run the python http server
-python3 -m http.server $PORT
+# Run the custom python server
+python3 serve.py

@@ -27,4 +27,6 @@ __MACOSX/
 *.txt
 !requirements.txt
 *.csv
-!sample_submission.csv # We can keep sample submission if needed, or ignore it.
+*.npy
+*.db
+tmp_imports/
