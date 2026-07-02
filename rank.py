@@ -60,29 +60,33 @@ def is_honeypot(cand):
         if comp == "Sarvam AI" and start_date < SARVAM_FOUNDING:
             return True, f"Worked at Sarvam AI starting {start_date}, before founding date (July 2023)"
             
-    # 2. Job duration mismatch check (using fast integer slicing)
+    # 2. Job duration mismatch check (using safe date range validation)
     for job in career:
         comp = job.get("company", "")
         start_date = job.get("start_date")
         if not start_date:
             continue
         
-        end_date = job.get("end_date")
-        if end_date:
-            end_year = int(end_date[:4])
-            end_month = int(end_date[5:7])
-        else:
-            end_year = 2026
-            end_month = 6
+        try:
+            start_year = int(start_date[:4])
+            start_month = int(start_date[5:7])
             
-        start_year = int(start_date[:4])
-        start_month = int(start_date[5:7])
-        
-        max_possible = (end_year - start_year) * 12 + (end_month - start_month)
-        declared_duration = job.get("duration_months", 0)
-        
-        if declared_duration > max_possible + 12:
-            return True, f"Impossible duration at {comp}: declared {declared_duration} months, but date range allows max {max_possible}"
+            end_date = job.get("end_date")
+            if end_date:
+                end_year = int(end_date[:4])
+                end_month = int(end_date[5:7])
+            else:
+                end_year = 2026
+                end_month = 6
+                
+            max_possible = (end_year - start_year) * 12 + (end_month - start_month)
+            declared_duration = job.get("duration_months", 0)
+            
+            if declared_duration > max_possible + 12:
+                return True, f"Impossible duration at {comp}: declared {declared_duration} months, but date range allows max {max_possible}"
+        except (ValueError, TypeError, IndexError):
+            # If dates are malformed, skip duration check for this job instead of crashing
+            continue
             
     return False, ""
 

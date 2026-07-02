@@ -278,6 +278,36 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
                 
+            # Normalize candidate ID and default structural blocks to guarantee safe evaluation
+            import time
+            valid_cands = []
+            for idx, cand in enumerate(imported_cands or []):
+                if not isinstance(cand, dict):
+                    continue
+                
+                # Check for alternative ID keys
+                cid = None
+                for id_key in ["candidate_id", "id", "cid", "candidateId", "Candidate ID"]:
+                    if id_key in cand and cand[id_key] is not None:
+                        cid = str(cand[id_key]).strip()
+                        break
+                if not cid:
+                    cid = f"cand_{idx}_{int(time.time())}"
+                cand["candidate_id"] = cid
+                
+                # Ensure default sub-blocks exist
+                if "profile" not in cand or not isinstance(cand["profile"], dict):
+                    cand["profile"] = {}
+                if "career_history" not in cand or not isinstance(cand["career_history"], list):
+                    cand["career_history"] = []
+                if "skills" not in cand or not isinstance(cand["skills"], list):
+                    cand["skills"] = []
+                if "redrob_signals" not in cand or not isinstance(cand["redrob_signals"], dict):
+                    cand["redrob_signals"] = {}
+                    
+                valid_cands.append(cand)
+            imported_cands = valid_cands
+            
             if not imported_cands:
                 self.send_response(400)
                 self.send_header('Content-Type', 'application/json')
