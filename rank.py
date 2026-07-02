@@ -163,8 +163,19 @@ def compute_skill_score(skills):
     if not skills:
         return 0.0
         
-    skills_map = {s.get("name", "").lower(): s for s in skills if s.get("duration_months", 0) > 0}
-    
+    skills_map = {}
+    for s in skills:
+        if isinstance(s, dict):
+            name = s.get("name")
+            if name:
+                dur = s.get("duration_months")
+                if dur is None:
+                    dur = 12
+                if dur > 0:
+                    skills_map[name.lower()] = s
+        elif isinstance(s, str) and s.strip():
+            skills_map[s.strip().lower()] = {"name": s.strip(), "duration_months": 12}
+            
     has_vector_db = any(db in skills_map for db in REQUIRED_VECTOR_DBS)
     has_embeddings = any(emb in skills_map for emb in REQUIRED_EMBEDDINGS)
     has_eval = any(ev in skills_map for ev in REQUIRED_EVAL)
@@ -183,10 +194,13 @@ def compute_skill_score(skills):
     
     bonus = 0.0
     for name, skill in skills_map.items():
-        prof = skill.get("proficiency", "beginner")
-        prof_val = {"beginner": 0.5, "intermediate": 1.0, "advanced": 1.5, "expert": 2.0}[prof]
+        prof = str(skill.get("proficiency", "beginner")).lower()
+        prof_mapping = {"beginner": 0.5, "intermediate": 1.0, "advanced": 1.5, "expert": 2.0}
+        prof_val = prof_mapping.get(prof, 0.5)
         ends = skill.get("endorsements", 0)
+        if ends is None: ends = 0
         dur = skill.get("duration_months", 0)
+        if dur is None: dur = 0
         
         is_relevant = (name in REQUIRED_VECTOR_DBS or name in REQUIRED_EMBEDDINGS or 
                        name in REQUIRED_EVAL or name == "python" or 

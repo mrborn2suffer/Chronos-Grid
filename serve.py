@@ -319,20 +319,34 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         if fld not in cand["redrob_signals"]:
                             cand["redrob_signals"][fld] = cand[fld]
                 
-                # Normalize skills (handle both string list and list types)
+                # Normalize skills (always map to list of dictionaries with name and duration)
                 if "skills" in cand:
                     if isinstance(cand["skills"], str):
-                        cand["skills"] = [s.strip() for s in cand["skills"].split(",") if s.strip()]
-                    elif not isinstance(cand["skills"], list):
+                        raw_skills = [s.strip() for s in cand["skills"].split(",") if s.strip()]
+                        cand["skills"] = [{"name": s, "duration_months": 12} for s in raw_skills]
+                    elif isinstance(cand["skills"], list):
+                        norm_skills = []
+                        for s in cand["skills"]:
+                            if isinstance(s, dict):
+                                norm_skills.append(s)
+                            elif isinstance(s, str) and s.strip():
+                                norm_skills.append({"name": s.strip(), "duration_months": 12})
+                        cand["skills"] = norm_skills
+                    else:
                         cand["skills"] = []
                 else:
                     cand["skills"] = []
                 
-                # Ensure career_history and education list exist
+                # Ensure career_history and education list exist and contain dictionaries
                 if "career_history" not in cand or not isinstance(cand["career_history"], list):
                     cand["career_history"] = []
+                else:
+                    cand["career_history"] = [job for job in cand["career_history"] if isinstance(job, dict)]
+                    
                 if "education" not in cand or not isinstance(cand["education"], list):
                     cand["education"] = []
+                else:
+                    cand["education"] = [edu for edu in cand["education"] if isinstance(edu, dict)]
                     
                 valid_cands.append(cand)
             imported_cands = valid_cands
