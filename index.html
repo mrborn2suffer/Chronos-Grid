@@ -1542,7 +1542,7 @@
                   Drag & drop your candidate list JSON file here,<br>or click to select file.
                 </p>
                 <input type="file" id="center-file-input" style="display: none;" accept=".json,.jsonl">
-                <button class="btn-primary" style="padding: 8px 20px; font-size: 12px; pointer-events: none;">Select File</button>
+                <div class="btn-primary" style="display: inline-block; padding: 8px 20px; font-size: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: center;">Select File</div>
               </label>
             </div>
           `;
@@ -2239,9 +2239,11 @@
         await loadCandidates(false);
       } catch (err) {
         if (importStatus) {
+          importStatus.style.display = 'block';
           importStatus.style.color = '#ff6b6b';
           importStatus.innerText = `Error: ${err.message}`;
         }
+        alert(`Error: ${err.message}`);
         await loadCandidates(false);
       } finally {
         hideProcessingOverlay();
