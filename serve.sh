@@ -19,7 +19,11 @@ echo "=========================================================="
 (
     sleep 0.8
     if command -v xdg-open > /dev/null; then
-        xdg-open "http://localhost:$PORT" >/dev/null 2>&1
+        if command -v setsid > /dev/null; then
+            setsid xdg-open "http://localhost:$PORT" >/dev/null 2>&1 &
+        else
+            xdg-open "http://localhost:$PORT" >/dev/null 2>&1 &
+        fi
     elif command -v open > /dev/null; then
         open "http://localhost:$PORT" >/dev/null 2>&1
     fi
