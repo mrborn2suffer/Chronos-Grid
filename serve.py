@@ -192,6 +192,8 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_api_candidates(parsed_url)
         elif parsed_url.path == '/api/jd':
             self.handle_api_get_jd()
+        elif parsed_url.path == '/api/export-xlsx':
+            self.handle_api_export_xlsx(parsed_url)
         else:
             super().do_GET()
 
@@ -550,6 +552,137 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps({"error": f"Failed to parse JD file: {str(e)}"}).encode('utf-8'))
+
+    def handle_api_export_xlsx(self, parsed_url):
+        try:
+            params = urllib.parse.parse_qs(parsed_url.query)
+            try: min_score = float(params.get('min_score', [75.0])[0])
+            except ValueError: min_score = 75.0
+            try: limit_val = int(params.get('limit', [-1])[0])
+            except ValueError: limit_val = -1
+
+            conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM candidates WHERE score * 100 >= ? ORDER BY rank ASC", (min_score,))
+            rows = cursor.fetchall()
+            conn.close()
+
+            candidates = []
+            for r in rows:
+                c = {
+                    "candidate_id": r["candidate_id"],
+                    "rank": r["rank"],
+                    "score": r["score"],
+                    "reasoning": r["reasoning"],
+                    "profile": json.loads(r["profile_json"]),
+                    "skills": json.loads(r["skills_json"]),
+                    "education": json.loads(r["education_json"]),
+                    "redrob_signals": json.loads(r["signals_json"]),
+                    "career_history": json.loads(r["career_json"])
+                }
+                candidates.append(c)
+
+            if limit_val > 0:
+                candidates = candidates[:limit_val]
+
+            import openpyxl
+            from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+            import io
+
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Shortlisted Candidates"
+            ws.views.sheetView[0].showGridLines = True
+
+            headers = [
+                "Rank", "Name", "Match Score", "Current Title", "Current Company",
+                "Location", "Experience (Yrs)", "Notice Period (Days)", "Top Skills",
+                "Education", "GitHub Score", "Recruiter Response Rate", "Interview Attendance"
+            ]
+            ws.append(headers)
+
+            header_font = Font(name="Segoe UI", size=11, bold=True, color="FFFFFF")
+            header_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+            center_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            left_align = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+            for col_idx in range(1, len(headers) + 1):
+                cell = ws.cell(row=1, column=col_idx)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = center_align
+
+            thin_side = Side(border_style="thin", color="CBD5E1")
+            thin_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
+
+            data_font = Font(name="Segoe UI", size=10)
+            for idx, c in enumerate(candidates):
+                profile = c["profile"]
+                signals = c["redrob_signals"]
+                skills_str = ", ".join([s.get("name", "") for s in c["skills"]][:5])
+                edu_str = ", ".join([f"{edu.get('degree', 'Degree')} ({edu.get('institution', 'Univ')})" for edu in c["education"]][:2])
+                
+                github = signals.get("github_activity_score", -1)
+                github_str = f"{github}/100" if github != -1 else "Not Linked"
+                
+                resp_rate = signals.get("recruiter_response_rate", 1.0)
+                resp_str = f"{int(resp_rate * 100)}%"
+                
+                attendance = signals.get("interview_completion_rate", 1.0)
+                att_str = f"{int(attendance * 100)}%"
+
+                row_data = [
+                    c["rank"],
+                    profile.get("anonymized_name", ""),
+                    f"{round(c['score'] * 100, 2)}%",
+                    profile.get("current_title", ""),
+                    profile.get("current_company", ""),
+                    f"{profile.get('location', '')}, {profile.get('country', '')}",
+                    profile.get("years_of_experience", 0.0),
+                    signals.get("notice_period_days", 30),
+                    skills_str,
+                    edu_str,
+                    github_str,
+                    resp_str,
+                    att_str
+                ]
+                ws.append(row_data)
+
+                row_idx = idx + 2
+                for col_idx in range(1, len(headers) + 1):
+                    cell = ws.cell(row=row_idx, column=col_idx)
+                    cell.font = data_font
+                    cell.border = thin_border
+                    if col_idx in [1, 3, 7, 8, 11, 12, 13]:
+                        cell.alignment = center_align
+                    else:
+                        cell.alignment = left_align
+
+            for col in ws.columns:
+                max_len = 0
+                for cell in col:
+                    val_str = str(cell.value or '')
+                    if len(val_str) > max_len:
+                        max_len = len(val_str)
+                col_letter = openpyxl.utils.get_column_letter(col[0].column)
+                ws.column_dimensions[col_letter].width = max(max_len + 3, 10)
+
+            output = io.BytesIO()
+            wb.save(output)
+            xlsx_bytes = output.getvalue()
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            self.send_header('Content-Disposition', 'attachment; filename=redrob_shortlist.xlsx')
+            self.send_header('Content-Length', str(len(xlsx_bytes)))
+            self.end_headers()
+            self.wfile.write(xlsx_bytes)
+        except Exception as e:
+            self.send_response(500)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": f"Failed to export Excel: {str(e)}"}).encode('utf-8'))
 
 JD_FILE_PATH = "job_description.txt"
 

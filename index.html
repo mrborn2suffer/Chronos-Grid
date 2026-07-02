@@ -1497,7 +1497,8 @@
       <!-- Action Buttons -->
       <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 14px; margin-top: 18px;">
         <button id="cancel-export-btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 8px 16px; font-size: 12px; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--text-secondary)'; this.style.backgroundColor='var(--bg-hover)';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.backgroundColor='transparent';">Cancel</button>
-        <button id="confirm-export-btn" class="btn-primary" style="padding: 8px 20px;">Print</button>
+        <button id="export-xlsx-btn" class="btn-primary" style="padding: 8px 20px; background-color: #10b981; border-color: #10b981; color: white;">Export Excel (.xlsx)</button>
+        <button id="confirm-export-btn" class="btn-primary" style="padding: 8px 20px;">Print PDF</button>
       </div>
     </div>
   </div>
@@ -2204,6 +2205,56 @@
       confirmExportBtn.addEventListener('click', () => {
         exportShortlistPDF();
       });
+    }
+
+    const exportXlsxBtn = document.getElementById('export-xlsx-btn');
+    if (exportXlsxBtn) {
+      exportXlsxBtn.addEventListener('click', () => {
+        exportShortlistXLSX();
+      });
+    }
+
+    async function exportShortlistXLSX() {
+      let threshold = 75;
+      if (exportScoreSelect && exportScoreSelect.value === 'custom') {
+        threshold = parseFloat(exportScoreInput.value) || 75;
+      } else if (exportScoreSelect) {
+        threshold = parseFloat(exportScoreSelect.value);
+      }
+
+      let limitValue = -1;
+      if (exportLimitSelect && exportLimitSelect.value === 'custom') {
+        limitValue = parseInt(exportLimitInput.value) || -1;
+      } else if (exportLimitSelect) {
+        limitValue = parseInt(exportLimitSelect.value);
+      }
+
+      try {
+        if (importStatus) {
+          importStatus.style.display = 'block';
+          importStatus.style.color = 'var(--text-secondary)';
+          importStatus.innerText = 'Generating Excel sheet...';
+        }
+
+        if (exportModal) exportModal.classList.remove('open');
+
+        const url = `/api/export-xlsx?min_score=${threshold}&limit=${limitValue}`;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'redrob_shortlist.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        if (importStatus) {
+          importStatus.style.color = 'var(--gauge-green)';
+          importStatus.innerText = 'Excel exported successfully!';
+          setTimeout(() => { importStatus.style.display = 'none'; }, 3000);
+        }
+      } catch (err) {
+        alert(err.message);
+        if (importStatus) importStatus.style.display = 'none';
+      }
     }
 
     async function exportShortlistPDF() {
