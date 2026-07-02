@@ -375,25 +375,14 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_api_reset(self):
         try:
-            default_path = "../[PUB] India_runs_data_and_ai_challenge/[PUB] India_runs_data_and_ai_challenge/India_runs_data_and_ai_challenge/candidates.jsonl"
-            if not os.path.exists(default_path):
-                default_path = "candidates.jsonl"
-                
-            if not os.path.exists(default_path):
-                self.send_response(400)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": f"Default candidates list not found at {default_path}"}).encode('utf-8'))
-                return
-                
-            print("Resetting database: Populating default candidates...")
-            imported_cands = rank.load_candidates_from_path(default_path)
-            ranked_cands = rank.rank_candidates(imported_cands, top_n=500)
+            print("Clearing candidate database...")
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM candidates")
+            conn.commit()
+            conn.close()
             
-            # Save to SQLite DB
-            save_candidates_to_db(ranked_cands, replace=True)
-            
-            # Respond with page 1 of results
+            # Respond with page 1 of results (which will now be empty)
             result = query_candidates(page=1, limit=20)
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')

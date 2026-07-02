@@ -1094,7 +1094,7 @@
             <li>Candidates whose entire career is spent in consulting/IT service companies (TCS, Infosys, Wipro, Accenture, Cognizant, etc.)</li>
             <li>AI experience consisting only of recent LangChain tutorials.</li>
             <li>CV, Speech, or Robotics focus without significant NLP/IR exposure.</li>
-            <li>Non-coding architects (has not written production code in last 18 months).</li>
+        <li>Non-coding architects (has not written production code in last 18 months).</li>
           </ul>
         </div>
       </div>
@@ -1133,6 +1133,85 @@
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const closeSidebarBtn = document.getElementById('close-sidebar-btn');
 
+    // Helper to toggle active UI states for search, filters, exports, etc.
+    function updateUIState() {
+      const isEmpty = (totalCandidatesCount === 0);
+
+      // Disable/Enable Search Input
+      searchInput.disabled = isEmpty;
+      searchInput.style.opacity = isEmpty ? '0.35' : '1';
+      searchInput.style.pointerEvents = isEmpty ? 'none' : 'auto';
+      searchInput.placeholder = isEmpty ? 'No dataset loaded' : 'Search by name, title, skill...';
+
+      // Disable/Enable Filter buttons
+      filterBtns.forEach(btn => {
+        if (isEmpty) {
+          btn.style.opacity = '0.35';
+          btn.style.pointerEvents = 'none';
+        } else {
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = 'auto';
+        }
+      });
+
+      // Disable/Enable Score Filter Select
+      const scoreFilterSelect = document.getElementById('score-filter-select');
+      if (scoreFilterSelect) {
+        scoreFilterSelect.disabled = isEmpty;
+        scoreFilterSelect.style.opacity = isEmpty ? '0.35' : '1';
+        scoreFilterSelect.style.pointerEvents = isEmpty ? 'none' : 'auto';
+      }
+
+      // Disable/Enable Export PDF button
+      const exportPdfBtn = document.getElementById('export-pdf-btn');
+      if (exportPdfBtn) {
+        if (isEmpty) {
+          exportPdfBtn.style.opacity = '0.35';
+          exportPdfBtn.style.pointerEvents = 'none';
+        } else {
+          exportPdfBtn.style.opacity = '1';
+          exportPdfBtn.style.pointerEvents = 'auto';
+        }
+      }
+
+      // Disable/Enable View Job Description button
+      const openJdBtn = document.getElementById('open-jd-btn');
+      if (openJdBtn) {
+        if (isEmpty) {
+          openJdBtn.style.opacity = '0.35';
+          openJdBtn.style.pointerEvents = 'none';
+        } else {
+          openJdBtn.style.opacity = '1';
+          openJdBtn.style.pointerEvents = 'auto';
+        }
+      }
+
+      if (isEmpty) {
+        candidateList.innerHTML = `
+          <div class="empty-state-container" style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 12px; opacity: 0.5;">
+              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
+              <path d="M12 8V12" />
+              <path d="M12 16H12.01" />
+            </svg>
+            <div style="font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 6px;">No Dataset Loaded</div>
+            <p style="font-size: 11px; line-height: 1.4; color: var(--text-muted); max-width: 180px; margin: 0 auto;">
+              Drop or select a candidate list file (JSON, CSV, PDF, XML, YAML) in the sidebar to begin matching.
+            </p>
+          </div>
+        `;
+        rightPane.innerHTML = `
+          <div class="empty-state" style="padding: 120px 20px; text-align: center;">
+            <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 20px; color: var(--text-primary); margin-bottom: 10px;">Classification Inactive</h2>
+            <p style="color: var(--text-secondary); max-width: 320px; margin: 0 auto; font-size: 13px; line-height: 1.6;">
+              Please import a fresh dataset of candidates from the sidebar to activate ranking and pedigree analysis.
+            </p>
+          </div>
+        `;
+        paginationContainer.innerHTML = '';
+      }
+    }
+
     // Fetch Candidates Data from SQLite database API
     async function loadCandidates() {
       try {
@@ -1164,7 +1243,7 @@
           if (!selectedId || !candidatesData.some(c => c.candidate_id === selectedId)) {
             selectCandidate(candidatesData[0].candidate_id);
           }
-        } else {
+        } else if (totalCandidatesCount > 0) {
           rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
         }
       } catch (error) {
@@ -1175,6 +1254,11 @@
 
     // Render list using pagination
     function renderList() {
+      updateUIState();
+      if (totalCandidatesCount === 0) {
+        return;
+      }
+
       if (candidatesData.length === 0) {
         candidateList.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 13px;">No matching candidates found.</div>`;
         paginationContainer.innerHTML = '';
@@ -1653,6 +1737,26 @@
       }
     });
 
+    // Reset all global UI elements and parameters to default search states
+    function resetSearchUI() {
+      currentPage = 1;
+      searchQuery = '';
+      activeFilter = 'all';
+      minScoreFilter = 0;
+      
+      // Reset filter button UI active state
+      filterBtns.forEach(b => b.classList.remove('active'));
+      const allBtn = Array.from(filterBtns).find(b => b.getAttribute('data-filter') === 'all');
+      if (allBtn) allBtn.classList.add('active');
+      
+      // Reset search input value
+      searchInput.value = '';
+      
+      // Reset score select dropdown value
+      const scoreFilterSelect = document.getElementById('score-filter-select');
+      if (scoreFilterSelect) scoreFilterSelect.value = '0';
+    }
+
     // Import Listeners
     importFileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
@@ -1699,19 +1803,13 @@
           importStatus.style.display = 'none';
         }, 4000);
 
-        currentPage = 1;
-        renderList();
-        
-        if (candidatesData.length > 0) {
-          selectCandidate(candidatesData[0].candidate_id);
-        } else {
-          rightPane.innerHTML = `<div class="empty-state"><h2>No matching candidate</h2><p>Refine your search or filters.</p></div>`;
-        }
+        resetSearchUI();
+        loadCandidates();
       } catch (err) {
         console.error('Import error:', err);
         importStatus.style.color = '#ff6b6b';
         importStatus.innerText = `Error: ${err.message}`;
-        renderList();
+        loadCandidates();
       } finally {
         importFileInput.value = '';
       }
@@ -1720,13 +1818,13 @@
     resetDbBtn.addEventListener('click', async () => {
       importStatus.style.display = 'block';
       importStatus.style.color = 'var(--text-secondary)';
-      importStatus.innerText = 'Resetting database to default candidates...';
+      importStatus.innerText = 'Resetting database...';
       
       candidateList.innerHTML = `
         <div style="padding: 80px 20px; text-align: center; color: var(--text-secondary); font-family: var(--font-sans);">
           <div class="spinner-monotonic"></div>
           <div style="font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: #fff;">Resetting candidate database...</div>
-          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">Running ML ranking weights...</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">Clearing tables...</div>
         </div>
       `;
       paginationContainer.innerHTML = '';
@@ -1744,22 +1842,18 @@
         totalPagesCount = data.total_pages;
         
         importStatus.style.color = 'var(--text-primary)';
-        importStatus.innerText = 'Database reset successful.';
+        importStatus.innerText = 'Database cleared successfully.';
         setTimeout(() => {
           importStatus.style.display = 'none';
         }, 3000);
 
-        currentPage = 1;
-        renderList();
-        
-        if (candidatesData.length > 0) {
-          selectCandidate(candidatesData[0].candidate_id);
-        }
+        resetSearchUI();
+        loadCandidates();
       } catch (err) {
         console.error('Reset error:', err);
         importStatus.style.color = '#ff6b6b';
         importStatus.innerText = `Reset failed: ${err.message}`;
-        renderList();
+        loadCandidates();
       }
     });
 

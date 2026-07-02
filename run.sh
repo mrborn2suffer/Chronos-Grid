@@ -5,13 +5,25 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR"
 
+# Check if candidates path argument is provided
+if [ -z "$1" ]; then
+    echo "❌ Error: No candidates dataset path provided."
+    echo "Usage: ./run.sh <path_to_candidates_file_or_dir> [output_path]"
+    exit 1
+fi
+
+CANDIDATES_PATH="$1"
+OUT_PATH="${2:-./submission.csv}"
+
+if [ ! -f "$CANDIDATES_PATH" ] && [ ! -d "$CANDIDATES_PATH" ]; then
+    echo "❌ Error: Candidates dataset not found at '$CANDIDATES_PATH'."
+    echo "Usage: ./run.sh <path_to_candidates_file_or_dir> [output_path]"
+    exit 1
+fi
+
 echo "=========================================================="
 echo "🚀 Redrob Matcher Engine: Running Candidate Ranker"
 echo "=========================================================="
-
-CANDIDATES_PATH="../[PUB] India_runs_data_and_ai_challenge/[PUB] India_runs_data_and_ai_challenge/India_runs_data_and_ai_challenge/candidates.jsonl"
-OUT_PATH="./submission.csv"
-VALIDATOR_PATH="../[PUB] India_runs_data_and_ai_challenge/[PUB] India_runs_data_and_ai_challenge/India_runs_data_and_ai_challenge/validate_submission.py"
 
 # Run the python ranker for the official submission (exactly 100 candidates)
 python3 rank.py --candidates "$CANDIDATES_PATH" --out "$OUT_PATH" --top 100
@@ -21,16 +33,9 @@ echo "=========================================================="
 echo "✅ Ranking complete! Official submission saved to: $OUT_PATH"
 echo "=========================================================="
 
-# Run format validation check on the official submission
-if [ -f "$VALIDATOR_PATH" ]; then
-    echo "🔍 Running format validation check..."
-    python3 "$VALIDATOR_PATH" "$OUT_PATH"
-    echo "=========================================================="
-fi
-
-# Populate SQLite database for the web dashboard
+# Populate SQLite database for the web dashboard with the ranked candidates
 echo "📊 Populating SQLite database with ranked candidates..."
-python3 populate_db.py
+python3 populate_db.py "$CANDIDATES_PATH"
 echo "=========================================================="
 echo "🖥️ Web dashboard database updated! To launch, run: ./serve.sh"
 echo "=========================================================="
