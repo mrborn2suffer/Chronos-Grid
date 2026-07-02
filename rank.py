@@ -573,8 +573,8 @@ def load_candidates_from_file(file_path):
         is_jsonl = True
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                first_char = f.read(1)
-                if first_char == "[":
+                content = f.read(100).strip()
+                if content.startswith("["):
                     is_jsonl = False
         except:
             pass
@@ -591,9 +591,21 @@ def load_candidates_from_file(file_path):
         else:
             with open(file_path, "r", encoding="utf-8") as f:
                 try:
-                    candidates = json.load(f)
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        candidates = data
+                    elif isinstance(data, dict):
+                        found = False
+                        for k, v in data.items():
+                            if isinstance(v, list) and k.lower() in ["candidate", "candidates"]:
+                                candidates = v
+                                found = True
+                                break
+                        if not found:
+                            candidates = [data]
                 except Exception as e:
                     print(f"JSON parse error in {file_path}: {e}")
+                    return []
         return candidates
         
     elif ext == '.xml':
